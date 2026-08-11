@@ -35,7 +35,10 @@ expand as patterns get validated across more projects.
   one large branch.
 - **Docs-before-PR** — documentation is updated as part of the same change
   that adds the functionality, not after, and not as a separate follow-up.
-- **Branch naming conventions** — [to be defined]
+- **Branch naming conventions** — defined in
+  [`plugins/sdlc/standards/core.md`](plugins/sdlc/standards/core.md): seven
+  prefixes, slug rules, branch-from-`origin/main`, and the rule for
+  platform-assigned `claude/*` branches.
 - **PR template** — [to be defined]
 - **Documentation organization** — [to be defined: where docs live, what
   goes in README vs. a docs/ folder, required sections]
@@ -73,6 +76,35 @@ assistance to identify:
 
 This audit happens before each topic file is written, not after, so the
 standard reflects real practice rather than aspiration.
+
+## How the standard reaches a project
+
+This repo is a Claude Code **plugin marketplace**, not a set of files to copy.
+Projects reference it; nothing is duplicated, and updates propagate from here.
+
+Add two keys to the project's `.claude/settings.json`:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "sdlc-standards": {
+      "source": { "source": "github", "repo": "fsamuels/sdlc-standards" }
+    }
+  },
+  "enabledPlugins": { "sdlc@sdlc-standards": true }
+}
+```
+
+The plugin delivers the standard in two layers:
+
+- **Principles prose** (`plugins/sdlc/standards/`) is injected into every
+  session by a `SessionStart` hook. It reloads on resume, clear, compact, and
+  fork, so it survives context compaction.
+- **Executable workflow** (`plugins/sdlc/skills/`) ships as namespaced skills
+  invoked as `/sdlc:<name>`.
+
+See [`docs/packaging.md`](docs/packaging.md) for why this is one plugin and what
+would justify splitting it.
 
 ## Applying this to a new project
 

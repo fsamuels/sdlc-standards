@@ -1,0 +1,11 @@
+{
+  "name": "sdlc",
+  "description": "Shared AI-driven SDLC standard: branch lifecycle, documentation structure, and the docs-before-PR gate.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Forrest Samuels"
+  },
+  "homepage": "https://github.com/fsamuels/sdlc-standards",
+  "repository": "https://github.com/fsamuels/sdlc-standards",
+  "license": "MIT"
+}
