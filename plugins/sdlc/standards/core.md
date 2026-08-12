@@ -1,7 +1,11 @@
-# SDLC Standard
+# SDLC Standard — Branch Lifecycle
 
 This project follows the shared SDLC standard from `fsamuels/sdlc-standards`.
 The rules below are authoritative project configuration, not suggestions.
+
+The standard arrives as several single-topic files, all of them loaded together;
+this one covers branches. Documentation organization and the docs-before-PR gate
+are in `documentation.md`.
 
 ## Branch lifecycle
 
