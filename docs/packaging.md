@@ -13,8 +13,8 @@ sdlc-standards/
         ├── .claude-plugin/
         │   └── plugin.json   # the plugin's own manifest
         ├── hooks/
-        │   └── hooks.json    # SessionStart: injects standards/core.md
-        ├── standards/        # layer 1 — principles prose
+        │   └── hooks.json    # SessionStart: injects standards/*.md
+        ├── standards/        # layer 1 — principles prose, one file per topic
         └── skills/           # layer 2 — executable, stack-specific
 ```
 

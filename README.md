@@ -39,7 +39,15 @@ expand as patterns get validated across more projects.
   [`plugins/sdlc/standards/core.md`](plugins/sdlc/standards/core.md): seven
   prefixes, slug rules, branch-from-`origin/main`, and the rule for
   platform-assigned `claude/*` branches.
-- **PR template** — [to be defined]
+- **PR template** — defined in
+  [`plugins/sdlc/standards/pull-requests.md`](plugins/sdlc/standards/pull-requests.md):
+  a single evidence-based template asking what changed, why, how it was
+  verified, and which docs shipped with it. It asks for pasted output and
+  links rather than checkboxes, because most PRs here are opened by an AI
+  assistant and a checkbox is not a signal once a model is ticking it. The
+  template is delivered by the plugin rather than committed to each project;
+  [`docs/pr-template.md`](docs/pr-template.md) records the alternatives and
+  what would justify revisiting that.
 - **Documentation organization** — [to be defined: where docs live, what
   goes in README vs. a docs/ folder, required sections]
 

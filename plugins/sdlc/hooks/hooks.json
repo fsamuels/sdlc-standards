@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cat \"${CLAUDE_PLUGIN_ROOT}\"/standards/core.md"
+            "command": "cat \"${CLAUDE_PLUGIN_ROOT}\"/standards/*.md"
           }
         ]
       }
