@@ -61,7 +61,8 @@ expand as patterns get validated across more projects.
 
 - Commit message conventions
 - Testing requirements before merge (coverage thresholds, what must be
-  tested vs. what can be skipped)
+  tested vs. what can be skipped) — **and there is now a candidate answer
+  waiting, from a repo that ran it.** See [audit 1](#audit-1--carpooled-2026-08-12)
 - Code review expectations for solo/AI-paired work
 - When to use notebooks/exploratory code vs. when to refactor into modules
 - Versioning and release practices
@@ -74,12 +75,18 @@ expand as patterns get validated across more projects.
 - Definition of "done" for a solo/portfolio project — README complete,
   tests passing, no open items in a status table
 
-Three of these — testing requirements, code review expectations, and
-definition of done — are live blockers rather than theoretical gaps.
-Carpooled has them open as
-[OQ-X1, OQ-X3 and OQ-X4](https://github.com/packagedeallabs-ship-it/carpooled/blob/main/docs/project/open-questions.md)
-and is deliberately not answering them locally, which means this repo is now
-on the critical path for another project. Answer them here first.
+**Two of these are live blockers rather than theoretical gaps.** Carpooled
+has day-to-day tooling and code review expectations open as
+[OQ-X1 and OQ-X3](https://github.com/packagedeallabs-ship-it/carpooled/blob/main/docs/project/open-questions.md)
+and is deliberately not answering them locally, which puts this repo on the
+critical path for another project. Answer them here first.
+
+**Testing and definition-of-done were on that list and came off it the same
+week, which is the more useful story.** Carpooled answered its own version
+(OQ-X4) rather than waiting — a runner, a stated line, and a suite behind
+it. That is not the drift this standard exists to prevent; it is the only
+kind of evidence this standard accepts. The answer is now a promotion
+candidate, and the rule it produced is written down below.
 
 **One item left this list rather than getting written.** *How this standard
 applies retroactively vs. only going forward* is settled by how adoption
@@ -137,10 +144,28 @@ the standing-permission wording is what let it bind without stopping to ask
 — the first thing the standard asked for was the thing the change adopting
 it had to do.
 
-**What it exposed as missing.** Three gaps, now on the critical path:
-testing requirements, code review expectations for AI-paired work, and
-definition of done. Carpooled is blocked on all three and is not answering
-them locally.
+**What it exposed as missing.** Two gaps, now on the critical path: day-to-day
+tooling, and code review expectations for AI-paired work. Carpooled is blocked
+on both and is not answering either locally.
+
+**And one correction, which arrived within the week and is the most useful
+thing the audit produced.** The adoption change initially routed *three*
+questions upward, testing and definition-of-done among them. Carpooled then
+answered its own version outright — a runner, a stated line (pure logic, RLS
+policies, auth state transitions; presentational components exempt), and a
+suite behind it — while the adoption PR was still open.
+
+That was the right call, and it means "route process questions upward" was
+too blunt as originally written. **The rule that replaced it:**
+
+> Answer it locally when you have run it and can show the evidence. Route it
+> upward when you are about to guess.
+
+Guessing separately in each repo is the drift this standard exists to stop.
+A repo that has *run* something is not drifting — it is producing the only
+input that makes a rule here worth writing. Carpooled's testing line is a
+promotion candidate on the same path the documentation conventions took, and
+this correction is now step 6 of the adoption checklist.
 
 ### Next
 
@@ -210,15 +235,26 @@ cannot follow, **open the disagreement here rather than writing a local
 override.** A local override is precisely the drift this repo exists to
 prevent, arriving one repo at a time.
 
-**6. Route the project's process questions here.** Testing requirements,
-review expectations and definition of done are not per-project questions.
-If the project has them open, mark them as standard-level and leave them
-open there rather than answering them twice, differently.
+**6. Sort the project's process questions by whether you have evidence.**
+Testing requirements, review expectations and definition of done are not
+per-project questions, so a project that is about to *guess* at one should
+mark it standard-level and leave it open here rather than answering it
+twice, differently. **But a project that has actually run something should
+answer it, then send the answer up.** The two cases look identical in a
+backlog and are opposites in practice:
 
-Steps 5 and 6 are the ones that make this a two-way arrangement. A project
-that only consumes rules will quietly accumulate exceptions; a project that
-sends findings back is what keeps the standard describing practice instead
-of aspiration.
+> Answer it locally when you have run it and can show the evidence. Route it
+> upward when you are about to guess.
+
+Carpooled got this wrong in its own adoption change and corrected it within
+the week — it marked its testing question standard-level, then answered it
+properly with a suite behind it. The corrected version is the rule above.
+
+Steps 5 and 6 are what make this a two-way arrangement. A project that only
+consumes rules will quietly accumulate exceptions; a project that only
+routes questions upward stalls waiting on a repo with no evidence to answer
+from. What keeps the standard describing practice rather than aspiration is
+the traffic going both directions.
 
 ## Further reading
 
