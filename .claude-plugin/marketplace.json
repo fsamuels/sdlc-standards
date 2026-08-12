@@ -1,0 +1,16 @@
+{
+  "name": "sdlc-standards",
+  "owner": {
+    "name": "Forrest Samuels"
+  },
+  "plugins": [
+    {
+      "name": "sdlc",
+      "source": "./plugins/sdlc",
+      "description": "Shared AI-driven SDLC standard: branch lifecycle, documentation structure, and the docs-before-PR gate.",
+      "author": {
+        "name": "Forrest Samuels"
+      }
+    }
+  ]
+}
