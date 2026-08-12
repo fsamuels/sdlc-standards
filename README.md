@@ -26,6 +26,11 @@ structured for that from the start.
 Early draft. This documents the process as currently practiced; it will
 expand as patterns get validated across more projects.
 
+**One adopter so far:**
+[carpooled](https://github.com/packagedeallabs-ship-it/carpooled), since
+2026-08-12. Rules here are therefore validated as *workable*, not yet as
+*general* — see [the audit](#auditing-existing-projects).
+
 ## What's defined so far
 
 - **Spec-first development** — every project starts with a SPEC.md before
@@ -35,13 +40,22 @@ expand as patterns get validated across more projects.
   one large branch.
 - **Docs-before-PR** — documentation is updated as part of the same change
   that adds the functionality, not after, and not as a separate follow-up.
+  Now a concrete five-item gate in
+  [`standards/documentation.md`](plugins/sdlc/standards/documentation.md#docs-before-pr).
 - **Branch naming conventions** — defined in
   [`plugins/sdlc/standards/core.md`](plugins/sdlc/standards/core.md): seven
   prefixes, slug rules, branch-from-`origin/main`, and the rule for
   platform-assigned `claude/*` branches.
-- **PR template** — [to be defined]
-- **Documentation organization** — [to be defined: where docs live, what
-  goes in README vs. a docs/ folder, required sections]
+- **Documentation organization** — defined in
+  [`plugins/sdlc/standards/documentation.md`](plugins/sdlc/standards/documentation.md):
+  README-as-map, `docs/` split by audience, say-it-once,
+  status-means-this-repo, the ID scheme as a linking API, the decision log
+  with its rationale and reversibility columns, and a CI-enforced link
+  checker.
+- **PR template** — [to be defined. The docs-before-PR checklist is the
+  content; what remains is the `.github/` file itself and whether the
+  standard can ship one, given that a plugin cannot write into a consuming
+  repo]
 
 ## What's not defined yet
 
@@ -59,14 +73,25 @@ expand as patterns get validated across more projects.
   never gets committed
 - Definition of "done" for a solo/portfolio project — README complete,
   tests passing, no open items in a status table
-- How this standard applies retroactively to existing projects vs. only
-  going forward
+
+Three of these — testing requirements, code review expectations, and
+definition of done — are live blockers rather than theoretical gaps.
+Carpooled has them open as
+[OQ-X1, OQ-X3 and OQ-X4](https://github.com/packagedeallabs-ship-it/carpooled/blob/main/docs/project/open-questions.md)
+and is deliberately not answering them locally, which means this repo is now
+on the critical path for another project. Answer them here first.
+
+**One item left this list rather than getting written.** *How this standard
+applies retroactively vs. only going forward* is settled by how adoption
+actually went: **going forward only.** Carpooled's already-merged `claude/*`
+branches were left alone, and no existing document was restructured to match
+`standards/documentation.md` — it described what that repo already did. A
+standard that requires a migration before it applies does not get adopted.
 
 ## Auditing existing projects
 
 Before finalizing several of the sections above, I plan to review my
-existing repos (starting with Durak Tracker and Chore Corral) with AI
-assistance to identify:
+existing repos with AI assistance to identify:
 
 - Practices I'm already following consistently, which should just get
   written down as-is
@@ -76,6 +101,53 @@ assistance to identify:
 
 This audit happens before each topic file is written, not after, so the
 standard reflects real practice rather than aspiration.
+
+### Audit 1 — carpooled, 2026-08-12
+
+The first one, and it produced
+[`standards/documentation.md`](plugins/sdlc/standards/documentation.md) more
+or less wholesale. Carpooled had independently arrived at README-as-map,
+`docs/` split by audience, say-it-once, an append-only ID scheme, and a
+decision log with a reversibility column — across ~29 documents, with a
+zero-dependency link checker enforcing it in CI. None of that was invented
+here; it was written down and generalized.
+
+**What the audit changed on the way up.** Two rules were promoted almost
+verbatim because they had visibly *cost* something when broken, which is
+better evidence than a rule that merely sounds right:
+
+- *Status always means this repository.* Carpooled tracks three codebases —
+  itself, a prototype, and a Lovable demo — and the ambiguity of "the demo"
+  cost a wrong assumption about roughly six person-weeks of estimate.
+- *Reversibility, sized before the debate.* Carpooled's decision log carries
+  an explicit easy/costly/one-way column with the instruction to spend
+  deliberation proportional to it.
+
+**What the audit rejected.** Carpooled's `C-` prefix (contradictions between
+source documents) is real and useful there, but it exists because that
+project was assembled from five conflicting source specs. It went into the
+standard as conditional rather than required.
+
+**What adopting it proved about a rule already written.** The
+platform-assigned branch rule in
+[`core.md`](plugins/sdlc/standards/core.md) fired on the adoption change
+itself: the session doing the work was handed a `claude/*` branch and moved
+to `docs/adopt-sdlc-standard` cut from `origin/main`. The rule binds, and
+the standing-permission wording is what let it bind without stopping to ask
+— the first thing the standard asked for was the thing the change adopting
+it had to do.
+
+**What it exposed as missing.** Three gaps, now on the critical path:
+testing requirements, code review expectations for AI-paired work, and
+definition of done. Carpooled is blocked on all three and is not answering
+them locally.
+
+### Next
+
+Durak Tracker and Chore Corral, as second and third data points — the ones
+that test whether `documentation.md` is general or merely carpooled-shaped.
+A rule that survives one repo is workable; a rule that survives three is a
+standard.
 
 ## How the standard reaches a project
 
@@ -98,18 +170,55 @@ Add two keys to the project's `.claude/settings.json`:
 The plugin delivers the standard in two layers:
 
 - **Principles prose** (`plugins/sdlc/standards/`) is injected into every
-  session by a `SessionStart` hook. It reloads on resume, clear, compact, and
-  fork, so it survives context compaction.
-- **Executable workflow** (`plugins/sdlc/skills/`) ships as namespaced skills
-  invoked as `/sdlc:<name>`.
+  session by a `SessionStart` hook. Every `*.md` in that directory is loaded,
+  so a new topic file ships by existing. It reloads on resume, clear, compact,
+  and fork, so it survives context compaction.
+- **Executable workflow** (`plugins/sdlc/skills/`) — **planned, not built.**
+  It will ship as namespaced skills invoked as `/sdlc:<name>`. Nothing
+  executable exists yet, and the prose layer is deliberately written to stand
+  on its own without it.
 
 See [`docs/packaging.md`](docs/packaging.md) for why this is one plugin and what
 would justify splitting it.
 
-## Applying this to a new project
+## Applying this to a project
 
-[To be written once the process is fully defined — a short checklist for
-starting a new repo under this standard.]
+Written from doing it once, on an existing repo. It should hold for a new
+one too — a new repo is the same list with less to reconcile.
+
+**1. Wire up the plugin.** Add the two keys above to `.claude/settings.json`
+and commit it. Nothing is copied; nothing else is installed.
+
+**2. Do not restructure anything yet.** The standard applies going forward.
+Existing branches, merged PRs and current doc layout are left alone. If the
+adoption change itself needs a migration, the standard is wrong, not the
+repo.
+
+**3. Point the project's own process doc at this one.** A `CONTRIBUTING.md`
+should *link* to the standard for branch naming, the docs-before-PR gate and
+documentation organization, and keep only what is genuinely local. Restating
+a rule locally forks it.
+
+**4. Record it as a decision.** If the project keeps a decision log — it
+should — adoption gets a row, with the rationale and the reversibility. It
+is an easy one to reverse: two keys.
+
+**5. Reconcile, and push the differences upward.** Where the project already
+does something the standard does not describe, that is a candidate for
+promotion — write it up here. Where the standard says something the project
+cannot follow, **open the disagreement here rather than writing a local
+override.** A local override is precisely the drift this repo exists to
+prevent, arriving one repo at a time.
+
+**6. Route the project's process questions here.** Testing requirements,
+review expectations and definition of done are not per-project questions.
+If the project has them open, mark them as standard-level and leave them
+open there rather than answering them twice, differently.
+
+Steps 5 and 6 are the ones that make this a two-way arrangement. A project
+that only consumes rules will quietly accumulate exceptions; a project that
+sends findings back is what keeps the standard describing practice instead
+of aspiration.
 
 ## Further reading
 

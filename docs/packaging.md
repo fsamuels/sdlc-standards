@@ -13,10 +13,19 @@ sdlc-standards/
         ├── .claude-plugin/
         │   └── plugin.json   # the plugin's own manifest
         ├── hooks/
-        │   └── hooks.json    # SessionStart: injects standards/core.md
+        │   └── hooks.json    # SessionStart: injects every standards/*.md
         ├── standards/        # layer 1 — principles prose
         └── skills/           # layer 2 — executable, stack-specific
 ```
+
+The hook globs `standards/*.md` rather than naming files, so a new topic file ships by
+being added to the directory — there is no second place to remember to edit. Files are
+concatenated in filename order; each carries its own `#` heading, so order is presentation
+only. Keep each file single-topic and small, for the same reason the standard asks
+projects to: focused context is what an AI assistant reads well.
+
+Note that `skills/` above is planned, not built. Nothing in the marketplace ships an
+executable layer yet, and the skill names used as examples below do not exist.
 
 A consuming project opts in with two keys in `.claude/settings.json`:
 
