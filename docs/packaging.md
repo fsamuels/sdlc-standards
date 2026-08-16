@@ -24,8 +24,8 @@ concatenated in filename order; each carries its own `#` heading, so order is pr
 only. Keep each file single-topic and small, for the same reason the standard asks
 projects to: focused context is what an AI assistant reads well.
 
-Note that `skills/` above is planned, not built. Nothing in the marketplace ships an
-executable layer yet, and the skill names used as examples below do not exist.
+`skills/` ships `new-branch` and `create-pr`, generalized from a real adopter's local
+implementation (see the sdlc-standards README's audit 3) rather than designed from scratch.
 
 A consuming project opts in with two keys in `.claude/settings.json`:
 
