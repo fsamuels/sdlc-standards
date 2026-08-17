@@ -1,8 +1,8 @@
 ---
 name: new-branch
 description: Create a new branch off the latest origin/main, named per the sdlc-standards branch lifecycle convention.
+when_to_use: The user asks to start new work, mentions a milestone/feature/bugfix by name, or you're about to make changes while sitting on main or a stale/unrelated branch.
 argument-hint: [feature|bugfix|docs|milestone|test|chore|refactor] [short description]
-disable-model-invocation: true
 allowed-tools: Bash(git *)
 ---
 

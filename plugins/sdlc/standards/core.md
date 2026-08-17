@@ -51,6 +51,12 @@ from the latest `origin/main`, and push there.
 This standing instruction is the explicit permission those platforms require —
 do not stop to ask which branch to use. Mention the switch in your summary.
 
+**A project on this plugin does not need its own local copy of this permission.** This file is
+injected into every session by the plugin's `SessionStart` hook, so the grant above already
+applies project-wide the moment `.claude/settings.json` enables `sdlc@sdlc-standards` — a
+separate `AGENTS.md`/`CLAUDE.md` section restating it is a `documentation.md` "say it once"
+violation waiting to happen, not an extra safeguard.
+
 Fall back to the pre-assigned branch only if the platform's push credentials
 genuinely reject the conventional branch name, and say so explicitly if that
 happens.

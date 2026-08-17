@@ -1,8 +1,8 @@
 ---
 name: create-pr
 description: Bring project docs up to date with the current branch's changes per the docs-before-PR gate, run repo checks, then push and open a PR against main.
+when_to_use: The user says "create a PR" / "open a PR" / "ship this", or you've just finished a change and pushing it is the natural next step.
 argument-hint: [optional extra context for the PR description]
-disable-model-invocation: true
 allowed-tools: Bash(git *) Bash(gh pr create *) Bash(gh pr view *) Bash(node *) Bash(npx *) Bash(npm run *) Bash(npm ci *) Bash(pnpm *) Bash(cat *)
 ---
 
@@ -16,7 +16,9 @@ docs are **already accurate** — no separate doc-catchup pass needed later.
 ## Steps
 
 1. **Sanity check.** Confirm the current branch isn't `main` (`git branch --show-current`); if
-   it is, stop and tell the user to run `/sdlc:new-branch` first.
+   it is, run `/sdlc:new-branch` inline first (asking for the type/description if they aren't
+   obvious from the conversation), then continue on the new branch rather than stopping to ask
+   the user to do it separately.
 
 2. **Fetch and diff against main:**
 
@@ -62,7 +64,10 @@ docs are **already accurate** — no separate doc-catchup pass needed later.
    than failing):
    - If `package.json` exists: check its `scripts` for `format`/`format:fix` and run it;
      otherwise if `prettier` is a dependency, run it directly with `--write .`.
-   - Run `lint`, `typecheck`, and `build` scripts if present.
+   - Run `lint`, `typecheck`, `test`, and `build` scripts if present. Skip `test` only if it
+     already ran clean earlier in this same session and nothing has changed since — don't
+     re-run an identical suite for no reason, but don't assume it passed if you haven't actually
+     seen it run against the current diff.
    - **If any check fails, stop.** Report the failure to the user and do not push or open a PR
      with a broken build.
 
