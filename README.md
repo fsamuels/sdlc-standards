@@ -23,13 +23,17 @@ structured for that from the start.
 
 ## Status
 
-Early draft. This documents the process as currently practiced; it will
-expand as patterns get validated across more projects.
+Early draft. This documents the process as currently practiced; it expands as
+patterns get validated across more projects.
 
-**One adopter so far:**
-[carpooled](https://github.com/packagedeallabs-ship-it/carpooled), since
-2026-08-12. Rules here are therefore validated as *workable*, not yet as
-*general* — see [the audit](#auditing-existing-projects).
+**Three adopters so far:** [carpooled](https://github.com/packagedeallabs-ship-it/carpooled)
+(since 2026-08-12, the repo the standard was extracted from),
+[durak-tracker](https://github.com/fsamuels/durak-tracker) (since 2026-08-11,
+branch-lifecycle rules only), and [chore-corral](https://github.com/fsamuels/chore-corral)
+(2026-08-16, also the source of the first executable skills layer). Rules here are therefore
+validated across three independent projects, not just one — see
+[the audit](#auditing-existing-projects) for what each confirmed, changed, or contributed
+upward.
 
 ## What's defined so far
 
@@ -52,6 +56,11 @@ expand as patterns get validated across more projects.
   status-means-this-repo, the ID scheme as a linking API, the decision log
   with its rationale and reversibility columns, and a CI-enforced link
   checker.
+- **Executable workflow** — `/sdlc:new-branch` and `/sdlc:create-pr`, in
+  [`plugins/sdlc/skills/`](plugins/sdlc/skills/), generalized from
+  chore-corral's proven local skills (see
+  [audit 3](#audit-3--chore-corral-2026-08-16)) rather than designed from
+  scratch.
 - **PR template** — [to be defined. The docs-before-PR checklist is the
   content; what remains is the `.github/` file itself and whether the
   standard can ship one, given that a plugin cannot write into a consuming
@@ -167,12 +176,66 @@ input that makes a rule here worth writing. Carpooled's testing line is a
 promotion candidate on the same path the documentation conventions took, and
 this correction is now step 6 of the adoption checklist.
 
+### Audit 2 — Durak Tracker, 2026-08-11
+
+The second adopter, and a narrower test than carpooled's on purpose: Durak Tracker took only the
+branch-lifecycle rules in [`core.md`](plugins/sdlc/standards/core.md) — wiring the plugin and
+pointing `CLAUDE.md`'s branch-naming section at it — and left `documentation.md` alone. Its docs
+(`docs/architecture.md`, `docs/current-status.md`, `docs/roadmap.md`, `docs/oauth-setup.md`)
+stayed flat, with no ID scheme, no reversibility column, and no decision log at all.
+
+**What this proved.** The two-layer split in [`packaging.md`](docs/packaging.md) isn't only a
+hypothetical unbundling — a real adopter took `core.md` without `documentation.md` and nothing
+broke. A project can adopt the branch rules on their own and route the rest upward or defer it,
+rather than being forced to take the whole standard at once.
+
+**What it left open**, until this round: no decision log, and no link checker despite docs that
+already cross-reference each other (`CLAUDE.md` links `docs/architecture.md#metrics`). Both
+landed in a documentation-normalization follow-up alongside chore-corral's adoption (audit 3)
+rather than being answered twice, independently, in each repo.
+
+### Audit 3 — Chore Corral, 2026-08-16
+
+The third adopter, and the first to arrive with more automation than the standard itself had.
+Chore Corral had already built `/new-branch` and `/create-pr` as local Claude Code skills —
+branch creation with an uncommitted-work guard, and a docs-before-PR gate that updates its status
+doc, runs format/lint/typecheck/build, then pushes and opens the PR — before this repo had any
+executable layer at all. [`packaging.md`](docs/packaging.md) had flagged skills as "planned, not
+built"; chore-corral had, in effect, already built the concrete version.
+
+**What the audit promoted.** Both skills, generalized and merged into
+[`plugins/sdlc/skills/`](plugins/sdlc/skills/) as `/sdlc:new-branch` and `/sdlc:create-pr` — this
+standard's first executable layer, sourced from a repo that had run it rather than designed from
+a blank page. The generalization that mattered: chore-corral's `create-pr` hardcoded its own doc
+filenames (`STATUS.md`, `MILESTONES.md`, …); the shared version instead reads the project's
+README documentation map — a table `documentation.md` already requires every adopter to keep —
+so the same skill works for a project with entirely different doc names (durak-tracker's
+`current-status.md`, carpooled's `docs/project/current-state.md`).
+
+**What the audit surfaced as a real discrepancy, not a preference.** Chore-corral's branch
+prefixes were `milestone/feature/fix/docs` — four, with `fix/` where `core.md` says `bugfix/`.
+Resolved by adopting the standard's set outright, matching durak-tracker's precedent of dropping
+a local closed set rather than carrying a variant forward: `fix/` is retired going forward,
+existing `fix/*` branches and merged history are left alone.
+
+**What's still open.** The skills layer is now proven on two Node/pnpm projects
+(chore-corral, and durak-tracker as the second consumer) but not on anything structurally
+different — a project on another language or with no package manager at all would be the real
+test of whether the doc-map-lookup generalization holds, or is itself
+carpooled-and-chore-corral-shaped in a different way than the filename-hardcoding it replaced.
+
 ### Next
 
-Durak Tracker and Chore Corral, as second and third data points — the ones
-that test whether `documentation.md` is general or merely carpooled-shaped.
-A rule that survives one repo is workable; a rule that survives three is a
-standard.
+The `docs/` split by audience (`product/`/`technical/`/`project/`, as carpooled has it) is still
+a promotion candidate rather than a rule: carpooled is the only adopter that has it, chore-corral
+is past the roughly-five-file threshold this standard names as the trigger, and durak-tracker is
+borderline. Deferred to its own change in each repo rather than bundled into adoption, per
+[step 2](#applying-this-to-a-project) — but it's the next thing likely to get written down here
+once a second adopter actually does it.
+
+A non-Node/pnpm stack adopting the skills layer is the next real test of whether
+`/sdlc:create-pr`'s doc-map lookup generalized cleanly or only moved the carpooled/chore-corral
+shape somewhere less obvious.
 
 ## How the standard reaches a project
 
@@ -198,10 +261,10 @@ The plugin delivers the standard in two layers:
   session by a `SessionStart` hook. Every `*.md` in that directory is loaded,
   so a new topic file ships by existing. It reloads on resume, clear, compact,
   and fork, so it survives context compaction.
-- **Executable workflow** (`plugins/sdlc/skills/`) — **planned, not built.**
-  It will ship as namespaced skills invoked as `/sdlc:<name>`. Nothing
-  executable exists yet, and the prose layer is deliberately written to stand
-  on its own without it.
+- **Executable workflow** (`plugins/sdlc/skills/`) — `/sdlc:new-branch` and
+  `/sdlc:create-pr`, namespaced skills invoked as `/sdlc:<name>`. The prose
+  layer is deliberately written to stand on its own without them; the skills
+  are convenience on top, not a dependency.
 
 See [`docs/packaging.md`](docs/packaging.md) for why this is one plugin and what
 would justify splitting it.
