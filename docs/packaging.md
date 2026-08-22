@@ -13,16 +13,28 @@ sdlc-standards/
         ├── .claude-plugin/
         │   └── plugin.json   # the plugin's own manifest
         ├── hooks/
-        │   └── hooks.json    # SessionStart: injects every standards/*.md
+        │   ├── hooks.json                # SessionStart + PreToolUse wiring
+        │   └── check-docs-before-pr.mjs  # PreToolUse: blocks `gh pr create`
+        │                                 # when the diff skips the gate
         ├── standards/        # layer 1 — principles prose
         └── skills/           # layer 2 — executable, stack-specific
 ```
 
-The hook globs `standards/*.md` rather than naming files, so a new topic file ships by
-being added to the directory — there is no second place to remember to edit. Files are
-concatenated in filename order; each carries its own `#` heading, so order is presentation
-only. Keep each file single-topic and small, for the same reason the standard asks
-projects to: focused context is what an AI assistant reads well.
+The `SessionStart` hook globs `standards/*.md` rather than naming files, so a new topic
+file ships by being added to the directory — there is no second place to remember to
+edit. Files are concatenated in filename order; each carries its own `#` heading, so
+order is presentation only. Keep each file single-topic and small, for the same reason
+the standard asks projects to: focused context is what an AI assistant reads well.
+
+The `PreToolUse` hook is a third thing again — not prose, not a skill, but a **backstop**.
+`create-pr` is how a session is meant to satisfy the docs-before-PR gate, but a skill is
+advisory: nothing stops a session from calling `gh pr create` directly instead of routing
+through it, which is exactly what happened in carpooled on 2026-08-21 (twice, in the same
+session, on the same PR). The hook doesn't care which path was taken — it checks the
+outcome, whether the diff going into `gh pr create` touches `docs/` or `README.md`, and
+blocks the call if not. Fails open whenever it can't be sure (no `docs/` directory, not a
+git repo, no determinable base branch) — a false block teaches a session to route around
+the hook, which is worse than an occasional miss.
 
 `skills/` ships `new-branch` and `create-pr`, generalized from a real adopter's local
 implementation (see the sdlc-standards README's audit 3) rather than designed from scratch.

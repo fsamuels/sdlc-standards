@@ -61,6 +61,13 @@ upward.
   chore-corral's proven local skills (see
   [audit 3](#audit-3--chore-corral-2026-08-16)) rather than designed from
   scratch.
+- **Docs-before-PR, enforced.** `create-pr` is advisory — a session can skip
+  it and call `gh pr create` directly, which happened in carpooled on
+  2026-08-21 (see [audit 4](#audit-4--carpooled-2026-08-21)). A `PreToolUse`
+  hook,
+  [`plugins/sdlc/hooks/check-docs-before-pr.mjs`](plugins/sdlc/hooks/check-docs-before-pr.mjs),
+  now blocks that call when the diff touches nothing under `docs/` or
+  `README.md`.
 - **PR template** — [to be defined. The docs-before-PR checklist is the
   content; what remains is the `.github/` file itself and whether the
   standard can ship one, given that a plugin cannot write into a consuming
@@ -223,6 +230,35 @@ existing `fix/*` branches and merged history are left alone.
 different — a project on another language or with no package manager at all would be the real
 test of whether the doc-map-lookup generalization holds, or is itself
 carpooled-and-chore-corral-shaped in a different way than the filename-hardcoding it replaced.
+
+### Audit 4 — carpooled, 2026-08-21
+
+Not a new adopter — carpooled catching the standard in a failure mode the first three audits
+hadn't hit. A session built and merged [PR #89](https://github.com/packagedeallabs-ship-it/carpooled/pull/89)
+(address autocomplete) by calling `gh pr create` directly, never invoking `/sdlc:create-pr` —
+the skill existed (audit 3, five days earlier) but nothing required routing through it, and the
+session's own general-purpose PR-creation habits were the path of least resistance. Documentation
+was added afterward, in [PR #90](https://github.com/packagedeallabs-ship-it/carpooled/pull/90),
+exactly the "follow-up documentation PR" `documentation.md`'s own Docs-before-PR section says
+this gate exists to prevent.
+
+**What the audit exposed.** A skill is advisory. `when_to_use` makes `create-pr` *likely* to fire
+when a session means to open a PR, but nothing stops a direct tool call from skipping it — and a
+long session with its own built-in ideas about how to open a PR will reach for those first unless
+something more concrete stops it.
+
+**What the audit promoted.** A `PreToolUse` hook,
+[`plugins/sdlc/hooks/check-docs-before-pr.mjs`](plugins/sdlc/hooks/check-docs-before-pr.mjs),
+wired alongside the existing `SessionStart` hook. It doesn't check whether `create-pr` ran — it
+checks the outcome: does the diff going into `gh pr create` touch `docs/` or `README.md`? If not,
+and the PR body carries no explicit "None needed" under a `## Docs updated` heading — the same
+escape hatch `create-pr`'s own PR template already uses — the tool call is blocked before it
+runs, with the reason written to the session so it can fix the diff and retry rather than being
+left to guess why the command failed.
+
+**Deliberately fails open.** No `docs/` directory, not a git repo, no determinable base branch —
+any of these skip enforcement rather than guessing. A hook that blocks incorrectly teaches a
+session to route around it, which is a worse outcome than the gap this audit is closing.
 
 ### Next
 
