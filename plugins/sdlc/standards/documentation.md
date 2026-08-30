@@ -144,14 +144,16 @@ stopped existing three merges ago.
 
 **Enforced, not just asked for.** The `create-pr` skill is how a session satisfies this
 gate — it reads the diff and updates the project's documentation before opening the PR.
-But a skill only runs when invoked, and nothing stops a session from calling `gh pr
-create` directly instead — which is exactly what happened in carpooled on 2026-08-21,
-twice, in one session. A `PreToolUse` hook (`hooks/check-docs-before-pr.mjs`) now blocks
-`gh pr create` when the diff touches nothing under `docs/` or `README.md`, unless the PR
-body explicitly says so under a `## Docs updated` heading containing "None needed" — the
-same escape hatch `create-pr`'s own PR template already uses. It fails open on anything it
-can't be sure about (no `docs/` directory, no git repo, no determinable base branch), so
-projects that haven't structurally adopted this standard are unaffected.
+But a skill only runs when invoked, and nothing stops a session from calling a PR-creation
+tool directly instead — which is exactly what happened in carpooled on 2026-08-21, twice,
+in one session. A `PreToolUse` hook (`hooks/check-docs-before-pr.mjs`) now blocks both
+paths a session can reach for — `gh pr create` over Bash, and any MCP tool matching
+`*create_pull_request*` for environments with no `gh` CLI (Claude Code on the web and
+other remote sessions) — whenever the diff touches nothing under `docs/` or `README.md`,
+unless the PR body explicitly says so under a `## Docs updated` heading containing "None
+needed" — the same escape hatch `create-pr`'s own PR template already uses. It fails open
+on anything it can't be sure about (no `docs/` directory, no git repo, no determinable base
+branch), so projects that haven't structurally adopted this standard are unaffected.
 
 ## Documenting what is not real yet
 
