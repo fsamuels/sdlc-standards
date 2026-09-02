@@ -3,7 +3,7 @@ name: create-pr
 description: Bring project docs up to date with the current branch's changes per the docs-before-PR gate, run repo checks, then push and open a PR against main.
 when_to_use: The user says "create a PR" / "open a PR" / "ship this", or you've just finished a change and pushing it is the natural next step.
 argument-hint: [optional extra context for the PR description]
-allowed-tools: Bash(git *) Bash(gh pr create *) Bash(gh pr view *) Bash(node *) Bash(npx *) Bash(npm run *) Bash(npm ci *) Bash(pnpm *) Bash(cat *)
+allowed-tools: Bash(git *) Bash(gh pr create *) Bash(gh pr view *) Bash(command -v gh) Bash(node *) Bash(npx *) Bash(npm run *) Bash(npm ci *) Bash(pnpm *) Bash(cat *) mcp__github__create_pull_request
 ---
 
 # Create PR
@@ -77,23 +77,35 @@ docs are **already accurate** — no separate doc-catchup pass needed later.
 
 8. **Push:** `git push -u origin HEAD`.
 
-9. **Open the PR:**
+9. **Open the PR — detect which PR-creation path this environment actually has, don't assume
+   `gh`.** Some environments (Claude Code on the web, other remote sessions) have no `gh` CLI at
+   all and only expose GitHub MCP tools instead. Check in this order:
 
-   ```
-   gh pr create --base main --title "<title>" --body "$(cat <<'EOF'
-   ## Summary
-   <bullets>
+   - **`gh` CLI:** `command -v gh` succeeds. Use:
 
-   ## Docs updated
-   <list files touched in step 4, or "None needed">
+     ```
+     gh pr create --base main --title "<title>" --body "$(cat <<'EOF'
+     ## Summary
+     <bullets>
 
-   ## Checks
-   <list what ran and passed, or "Skipped — no package.json yet">
-   EOF
-   )"
-   ```
+     ## Docs updated
+     <list files touched in step 4, or "None needed">
+
+     ## Checks
+     <list what ran and passed, or "Skipped — no package.json yet">
+     EOF
+     )"
+     ```
+
+   - **No `gh`, but a GitHub MCP tool is available** (a tool named like
+     `mcp__github__create_pull_request`): call it directly with the equivalent `base`, `head`,
+     `title`, and `body` fields (same body content as above).
+   - **Neither is available:** stop after the push in step 8, tell the user the branch is pushed,
+     and give them the compare URL (`https://github.com/<owner>/<repo>/compare/main...<branch>`)
+     to open the PR themselves.
 
    Derive the title from the branch name/commits. Fold in any extra context from `$ARGUMENTS`
    if provided.
 
-10. **Report the PR URL** back to the user.
+10. **Report the PR URL** back to the user (or the compare URL, if step 9 couldn't open the PR
+    itself).

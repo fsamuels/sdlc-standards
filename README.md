@@ -61,6 +61,24 @@ upward.
   chore-corral's proven local skills (see
   [audit 3](#audit-3--chore-corral-2026-08-16)) rather than designed from
   scratch.
+- **Docs-before-PR, enforced.** `create-pr` is advisory — a session can skip
+  it and call a PR-creation tool directly, which happened in carpooled on
+  2026-08-21 (see [audit 4](#audit-4--carpooled-2026-08-21)). A `PreToolUse`
+  hook,
+  [`plugins/sdlc/hooks/check-docs-before-pr.mjs`](plugins/sdlc/hooks/check-docs-before-pr.mjs),
+  now blocks both paths a session can reach for it by — `gh pr create` over
+  Bash, and any MCP tool matching `*create_pull_request*` for environments
+  with no `gh` CLI — when the diff touches nothing under `docs/` or
+  `README.md`. See [audit 5](#audit-5--carpooled-2026-08-30).
+- **`create-pr` works without a `gh` CLI.** Detects whether `gh` is on
+  `PATH` and falls back to a GitHub MCP tool
+  (`mcp__github__create_pull_request`) when it isn't, rather than assuming
+  every environment has it — see audit 5.
+- **Auto-install self-heal.** A vendorable
+  [`ensure-installed.sh`](plugins/sdlc/scripts/ensure-installed.sh) script
+  mitigates an intermittent failure where a project's plugin declaration
+  doesn't sync on a fresh session — see audit 5 and
+  [`docs/packaging.md`](docs/packaging.md#known-gap-intermittent-auto-install-failure).
 - **PR template** — [to be defined. The docs-before-PR checklist is the
   content; what remains is the `.github/` file itself and whether the
   standard can ship one, given that a plugin cannot write into a consuming
@@ -223,6 +241,80 @@ existing `fix/*` branches and merged history are left alone.
 different — a project on another language or with no package manager at all would be the real
 test of whether the doc-map-lookup generalization holds, or is itself
 carpooled-and-chore-corral-shaped in a different way than the filename-hardcoding it replaced.
+
+### Audit 4 — carpooled, 2026-08-21
+
+Not a new adopter — carpooled catching the standard in a failure mode the first three audits
+hadn't hit. A session built and merged [PR #89](https://github.com/packagedeallabs-ship-it/carpooled/pull/89)
+(address autocomplete) by calling `gh pr create` directly, never invoking `/sdlc:create-pr` —
+the skill existed (audit 3, five days earlier) but nothing required routing through it, and the
+session's own general-purpose PR-creation habits were the path of least resistance. Documentation
+was added afterward, in [PR #90](https://github.com/packagedeallabs-ship-it/carpooled/pull/90),
+exactly the "follow-up documentation PR" `documentation.md`'s own Docs-before-PR section says
+this gate exists to prevent.
+
+**What the audit exposed.** A skill is advisory. `when_to_use` makes `create-pr` *likely* to fire
+when a session means to open a PR, but nothing stops a direct tool call from skipping it — and a
+long session with its own built-in ideas about how to open a PR will reach for those first unless
+something more concrete stops it.
+
+**What the audit promoted.** A `PreToolUse` hook,
+[`plugins/sdlc/hooks/check-docs-before-pr.mjs`](plugins/sdlc/hooks/check-docs-before-pr.mjs),
+wired alongside the existing `SessionStart` hook. It doesn't check whether `create-pr` ran — it
+checks the outcome: does the diff going into `gh pr create` touch `docs/` or `README.md`? If not,
+and the PR body carries no explicit "None needed" under a `## Docs updated` heading — the same
+escape hatch `create-pr`'s own PR template already uses — the tool call is blocked before it
+runs, with the reason written to the session so it can fix the diff and retry rather than being
+left to guess why the command failed.
+
+**Deliberately fails open.** No `docs/` directory, not a git repo, no determinable base branch —
+any of these skip enforcement rather than guessing. A hook that blocks incorrectly teaches a
+session to route around it, which is a worse outcome than the gap this audit is closing.
+
+### Audit 5 — carpooled, 2026-08-30
+
+Three more gaps, all hit in the same round of real use, none of them about what the standard
+says — about distribution and enforcement.
+
+**Gap A — the plugin didn't auto-install.** A fresh Claude Code Web / remote session on
+carpooled had the correct `extraKnownMarketplaces` + `enabledPlugins` declaration in
+`.claude/settings.json`, but `claude plugin list` showed nothing installed and `claude plugin
+marketplace list` showed no marketplaces configured, until installed by hand. A second fresh
+session on the same project, unchanged settings, loaded correctly with no manual step —
+**intermittent, not deterministic**, which is the worse failure shape: it passes a one-off
+check and then fails in the field. Root cause not found. Mitigated, not fixed: a vendorable
+[`ensure-installed.sh`](plugins/sdlc/scripts/ensure-installed.sh) that a consuming project
+copies in and wires as its own `SessionStart` hook — it has to live outside this plugin,
+since the failure is that the plugin isn't there yet to run a hook of its own. See
+[`docs/packaging.md`](docs/packaging.md#known-gap-intermittent-auto-install-failure).
+
+**Gap B — audit 4's enforcement only covered half the exit.** `check-docs-before-pr.mjs`
+blocked `gh pr create`, but Claude Code on the web and other remote sessions frequently have
+no `gh` CLI at all — only GitHub MCP tools. A session in that environment could still open an
+undocumented PR through `mcp__github__create_pull_request` and the audit-4 hook would never
+see it. Widened the same matcher-and-diff-check design (not a separate mechanism) to also
+match any MCP tool name containing `create_pull_request`, reading the override phrase from
+the MCP call's `body` field instead of a shell command string. Verified against nine
+synthetic `PreToolUse` payloads piped into the script directly (both call shapes, times
+allow/deny/override) before wiring it in.
+
+**Gap C — `create-pr`'s own last step assumed `gh`.** Same root problem as gap B, one layer
+up: the skill's step 9 hardcoded `gh pr create`. It now checks for `gh` on `PATH` first and
+falls back to the MCP tool when absent, falling back further to reporting a compare URL if
+neither exists. `new-branch` was audited too — it only ever shells out to `git`, so it needed
+no change.
+
+**What ties the three together.** None of them touch what `standards/documentation.md` or
+`core.md` ask a project to do — the gaps are in getting the plugin onto disk and in making
+its enforcement match the actual set of tools an environment has, not in the standard being
+wrong. Consistent with [audit 1's finding](#audit-1--carpooled-2026-08-12): carpooled
+surfaces gaps by running the standard somewhere new, not by disagreeing with it.
+
+See [`CHANGELOG.md`](CHANGELOG.md)'s 0.4.0 entry for the shipped diff, and
+[`docs/upgrading.md`](docs/upgrading.md) for the prompt other adopters can use to pick this
+up. [`CONSUMERS.md`](CONSUMERS.md) now tracks every known adopter, added in this same round,
+so a future breaking change has a known blast radius instead of relying on each owner
+noticing a new release.
 
 ### Next
 
