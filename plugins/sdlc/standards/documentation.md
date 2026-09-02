@@ -155,6 +155,28 @@ needed" — the same escape hatch `create-pr`'s own PR template already uses. It
 on anything it can't be sure about (no `docs/` directory, no git repo, no determinable base
 branch), so projects that haven't structurally adopted this standard are unaffected.
 
+## The PR template
+
+**A project's `.github/pull_request_template.md` matches the shape `create-pr` fills in —
+`Summary` / `Docs updated` / `Checks` — because the docs-before-PR gate has to work the same
+way whether a PR was opened by the skill or by hand.** The `## Docs updated` heading is not
+decoration: the enforcement hook (above) looks for exactly that heading and the phrase "None
+needed" as its override, so a hand-opened PR needs the same section to have any way to pass
+the gate.
+
+There is a generalized version to copy in
+[`plugins/sdlc/templates/pull_request_template.md`](../templates/pull_request_template.md),
+extracted from two adopters (chore-corral, timelapse-creator) that had each already built
+their own version of the same three sections. Copying it into a project's own
+`.github/pull_request_template.md` is the exception to say-it-once, the same reasoning as
+vendoring `check-links.mjs` above: a plugin cannot write into a consuming repo's `.github/`
+directory directly, and it is a few lines of Markdown, not something worth a shared package.
+
+A project may extend it — timelapse-creator's version adds a `Why` section and a
+project-specific checklist (`ruff check`, `black --check`, `pytest`) — as long as `Summary`,
+`Docs updated`, and `Checks` (or an equivalent heading the enforcement hook is updated to
+recognize) survive the extension.
+
 ## Documenting what is not real yet
 
 Projects accumulate scaffolds, shells, and ported screens that look finished. **Say

@@ -79,10 +79,11 @@ upward.
   mitigates an intermittent failure where a project's plugin declaration
   doesn't sync on a fresh session — see audit 5 and
   [`docs/packaging.md`](docs/packaging.md#known-gap-intermittent-auto-install-failure).
-- **PR template** — [to be defined. The docs-before-PR checklist is the
-  content; what remains is the `.github/` file itself and whether the
-  standard can ship one, given that a plugin cannot write into a consuming
-  repo]
+- **PR template** — a generalized `Summary` / `Docs updated` / `Checks` template in
+  [`plugins/sdlc/templates/pull_request_template.md`](plugins/sdlc/templates/pull_request_template.md),
+  extracted from two adopters that had each already built one, for a project to vendor into
+  its own `.github/pull_request_template.md` (a plugin cannot write there directly). See
+  [`standards/documentation.md`](plugins/sdlc/standards/documentation.md#the-pr-template).
 
 ## What's not defined yet
 
@@ -357,6 +358,13 @@ The plugin delivers the standard in two layers:
   `/sdlc:create-pr`, namespaced skills invoked as `/sdlc:<name>`. The prose
   layer is deliberately written to stand on its own without them; the skills
   are convenience on top, not a dependency.
+- **Enforcement** (`plugins/sdlc/hooks/`) — a `PreToolUse` hook that backstops
+  the docs-before-PR gate: it blocks `gh pr create` and any
+  `*create_pull_request*` MCP tool call whose diff skips `docs/`/`README.md`,
+  regardless of whether `/sdlc:create-pr` was used to get there. This is a
+  third thing again, not prose and not a skill — see
+  [`docs/packaging.md#enforcement-the-pretooluse-docs-before-pr-gate`](docs/packaging.md#enforcement-the-pretooluse-docs-before-pr-gate)
+  for exactly what it covers.
 
 See [`docs/packaging.md`](docs/packaging.md) for why this is one plugin and what
 would justify splitting it.

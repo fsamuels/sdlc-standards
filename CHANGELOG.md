@@ -3,6 +3,26 @@
 All notable changes to the `sdlc` plugin are recorded here. Versions refer to
 [`plugins/sdlc/.claude-plugin/plugin.json`](plugins/sdlc/.claude-plugin/plugin.json).
 
+## 0.5.0
+
+A consistency audit across every known consumer (2026-09-02), ahead of a documentation
+reorganization pass. No behavior change to the hooks or skills — this closes gaps in the
+standard's own bookkeeping and fills in the one item `README.md` had marked undefined.
+
+- **PR template, generalized.** Adds
+  [`plugins/sdlc/templates/pull_request_template.md`](plugins/sdlc/templates/pull_request_template.md)
+  — `Summary` / `Docs updated` / `Checks`, matching the body `create-pr` already generates —
+  extracted from two adopters (chore-corral, timelapse-creator) that had each independently
+  built their own version. See
+  [`standards/documentation.md`](plugins/sdlc/standards/documentation.md#the-pr-template) for
+  how a project vendors it.
+- **`CONSUMERS.md` was missing two known adopters** — aerial-measurement-tool (2026-08-30) and
+  timelapse-creator (2026-08-17) both had the plugin wired but no row, defeating the file's
+  purpose of tracking blast radius for a breaking change.
+- **README's "how the standard reaches a project" section didn't mention the enforcement
+  hook.** It described two layers (prose, skills); the `PreToolUse` docs-before-PR gate is a
+  third, distinct thing per `docs/packaging.md`, and is now named as one in the README too.
+
 ## 0.4.0
 
 Fixes three gaps surfaced by [packagedeallabs-ship-it/carpooled](https://github.com/packagedeallabs-ship-it/carpooled)
