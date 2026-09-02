@@ -87,6 +87,10 @@ upward.
 
 ## What's not defined yet
 
+- **Documentation reorganization across adopters** — not an open design question, unlike the
+  rest of this list. `standards/documentation.md`'s rules are settled; several adopters just
+  don't comply yet. Scoped by topic and sequenced in
+  [`docs/roadmap.md`](docs/roadmap.md).
 - Commit message conventions
 - Testing requirements before merge (coverage thresholds, what must be
   tested vs. what can be skipped) — **and there is now a candidate answer

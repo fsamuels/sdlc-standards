@@ -11,6 +11,7 @@ blast radius instead of surfacing only when a project owner happens to notice a 
 | [fsamuels/aerial-measurement-tool](https://github.com/fsamuels/aerial-measurement-tool) | 2026-08-30 | standards + skills | Missed on this table until the 2026-09-02 audit. |
 | [fsamuels/timelapse-creator](https://github.com/fsamuels/timelapse-creator) | 2026-08-17 | standards + skills | Missed on this table until the 2026-09-02 audit; has its own `ci/`/`perf/` branch-prefix extensions and a local `.github/pull_request_template.md`. |
 | [fsamuels/electric-fence-monitor](https://github.com/fsamuels/electric-fence-monitor) | 2026-09-02 | standards + skills | Previously had a local, undocumented branch convention (`bug/`, no milestone/test/refactor). Migrated to the standard's prefixes; kept `hardware/` as a local extension for schematic/PCB work. |
+| [fsamuels/boglehead-analyzer](https://github.com/fsamuels/boglehead-analyzer) | 2026-09-02 | `standards/core.md` only (branch lifecycle) | Narrower adopter by design, matching durak-tracker — no `documentation.md`, no skills, no PR template. |
 
 ## Keeping this current
 
