@@ -352,7 +352,7 @@ Add two keys to the project's `.claude/settings.json`:
 }
 ```
 
-The plugin delivers the standard in two layers:
+The plugin delivers the standard in three layers:
 
 - **Principles prose** (`plugins/sdlc/standards/`) is injected into every
   session by a `SessionStart` hook. Every `*.md` in that directory is loaded,
@@ -370,8 +370,52 @@ The plugin delivers the standard in two layers:
   [`docs/packaging.md#enforcement-the-pretooluse-docs-before-pr-gate`](docs/packaging.md#enforcement-the-pretooluse-docs-before-pr-gate)
   for exactly what it covers.
 
+**What's actually enforced, and what isn't — read this before assuming either way.**
+
+- **The docs-before-PR gate checks the *outcome*, not the path taken.** It does not
+  require a session to literally invoke `/sdlc:create-pr` — any route to `gh pr
+  create`/an MCP PR-creation call passes as long as the diff touches `docs/`/`README.md`,
+  or the PR body says "None needed" under a `## Docs updated` heading. `/sdlc:create-pr`
+  is *how* a session is meant to satisfy the gate, and the natural thing to reach for
+  when a PR is requested — its own `when_to_use` is written to fire whenever the user
+  says "create a PR" / "ship this" — but nothing forces that specific skill to run.
+  What's actually gated is whether the diff going into the PR-creation call carries doc
+  updates, not which tool produced it.
+- **Branch naming and the platform-assigned-branch permission are not hook-enforced at
+  all.** `core.md`'s prefix table and the standing permission to rename a `claude/*`
+  branch reach a session only as prose — via the `SessionStart` injection and the
+  project's own local restatement (see [`core.md`](plugins/sdlc/standards/core.md#platform-assigned-branches)).
+  No `PreToolUse` hook blocks a `git branch`/`git switch -c` call with a non-conforming
+  name; nothing stops a branch from landing without the prefix. Compliance here depends
+  entirely on prose being followed, not a gate — this standard's general posture is
+  prose first, with a blocking hook added only where drift has actually been observed
+  (the docs-before-PR gate exists because carpooled skipped the skill twice in one
+  session; see [audit 4](#audit-4--carpooled-2026-08-21)). No equivalent drift has been
+  observed for branch naming yet, so no hook exists for it.
+
 See [`docs/packaging.md`](docs/packaging.md) for why this is one plugin and what
 would justify splitting it.
+
+## Choosing how much to take
+
+Two adoption depths exist today, both deliberate — not a partial or broken version of
+the other:
+
+- **Full** — standards + skills (+ optionally the PR template, the link checker if docs
+  cross-reference each other). Most adopters (carpooled, chore-corral,
+  aerial-measurement-tool, timelapse-creator, electric-fence-monitor).
+- **Branch-lifecycle only** — `standards/core.md` alone, no `documentation.md`, no
+  skills, no PR template. durak-tracker and boglehead-analyzer took this path by design:
+  a smaller project that doesn't (yet) want the doc-structure rules or the PR-creation
+  workflow, but still wants consistent branch naming and the platform-assigned-branch
+  permission.
+
+Both are wired the same way — the two `.claude/settings.json` keys are identical either
+way, since nothing is copied. The difference is entirely in what a project's own
+`CLAUDE.md`/`CONTRIBUTING.md` says it follows, and whether it vendors the optional pieces
+in step 7 below. Pick narrower when the standard's doc-organization rules genuinely don't
+fit yet; route the disagreement upward (step 5) rather than defaulting to narrow because
+the fuller adoption looked like more work.
 
 ## Applying this to a project
 
@@ -422,6 +466,30 @@ consumes rules will quietly accumulate exceptions; a project that only
 routes questions upward stalls waiting on a repo with no evidence to answer
 from. What keeps the standard describing practice rather than aspiration is
 the traffic going both directions.
+
+**7. Vendor the optional pieces, if taking the full layer.** Nothing above requires
+these — they're not wired by the two `.claude/settings.json` keys, because a plugin
+cannot write into a consuming repo's own directories (see
+["Choosing how much to take"](#choosing-how-much-to-take)):
+
+- Copy [`plugins/sdlc/templates/pull_request_template.md`](plugins/sdlc/templates/pull_request_template.md)
+  to the project's own `.github/pull_request_template.md`.
+- If the project's docs cross-reference each other, copy
+  [`carpooled/scripts/check-links.mjs`](https://github.com/packagedeallabs-ship-it/carpooled/blob/main/scripts/check-links.mjs)
+  and wire it into CI, per [`documentation.md`](plugins/sdlc/standards/documentation.md#link-integrity-is-enforced-not-hoped-for).
+- If a fresh session ever fails to auto-install the plugin, vendor
+  [`ensure-installed.sh`](plugins/sdlc/scripts/ensure-installed.sh) as a self-heal
+  `SessionStart` hook in the project's own settings, per
+  [`docs/packaging.md`](docs/packaging.md#known-gap-intermittent-auto-install-failure) —
+  don't add this preemptively; it's a mitigation for an observed failure, not a default.
+
+**8. Add a row to this repo's [`CONSUMERS.md`](CONSUMERS.md).** The one piece of
+adoption bookkeeping that lives here, not in the adopting project — easy to forget
+since nothing in the adopting repo's own commit touches it. Two known adopters were
+missing from this table for weeks before a 2026-09-02 audit caught it, which is exactly
+the failure this file exists to prevent. Do it as part of the same adoption change if
+you can (open a PR here alongside the one in the adopting project); if you can't, at
+least don't consider adoption finished until this row exists.
 
 ## Further reading
 
