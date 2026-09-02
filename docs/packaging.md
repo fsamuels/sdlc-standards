@@ -18,6 +18,8 @@ sdlc-standards/
         │                                 # creation when the diff skips the gate
         ├── scripts/
         │   └── ensure-installed.sh  # vendorable self-heal, see below
+        ├── templates/
+        │   └── pull_request_template.md  # vendorable, see documentation.md#the-pr-template
         ├── standards/        # layer 1 — principles prose
         └── skills/           # layer 2 — executable, stack-specific
 ```
