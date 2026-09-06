@@ -74,10 +74,13 @@ upward.
   `PATH` and falls back to a GitHub MCP tool
   (`mcp__github__create_pull_request`) when it isn't, rather than assuming
   every environment has it — see audit 5.
-- **Auto-install self-heal.** A vendorable
-  [`ensure-installed.sh`](plugins/sdlc/scripts/ensure-installed.sh) script
-  mitigates an intermittent failure where a project's plugin declaration
-  doesn't sync on a fresh session — see audit 5 and
+- **Auto-install self-heal, vendored by default.** A vendorable
+  [`ensure-installed.sh`](plugins/sdlc/scripts/ensure-installed.sh) script mitigates an
+  intermittent, *silent* failure where a project's plugin declaration doesn't sync on a
+  fresh session — see audit 5. Originally optional, added only once a project hit the
+  failure; promoted to step 1 of every adoption after carpooled's silent failure let a
+  real code PR ([carpooled#116](https://github.com/packagedeallabs-ship-it/carpooled/pull/116))
+  merge with the docs-before-PR gate never running, undetected for weeks — see
   [`docs/packaging.md`](docs/packaging.md#known-gap-intermittent-auto-install-failure).
 - **PR template** — a generalized `Summary` / `Docs updated` / `Checks` template in
   [`plugins/sdlc/templates/pull_request_template.md`](plugins/sdlc/templates/pull_request_template.md),
@@ -411,19 +414,32 @@ the other:
   permission.
 
 Both are wired the same way — the two `.claude/settings.json` keys are identical either
-way, since nothing is copied. The difference is entirely in what a project's own
-`CLAUDE.md`/`CONTRIBUTING.md` says it follows, and whether it vendors the optional pieces
-in step 7 below. Pick narrower when the standard's doc-organization rules genuinely don't
-fit yet; route the disagreement upward (step 5) rather than defaulting to narrow because
-the fuller adoption looked like more work.
+way, since nothing is copied, and both vendor the self-heal script in step 1 regardless
+of depth (that failure mode doesn't care which layer a project took). The difference is
+entirely in what a project's own `CLAUDE.md`/`CONTRIBUTING.md` says it follows, and
+whether it vendors the remaining optional pieces in step 7 below. Pick narrower when the
+standard's doc-organization rules genuinely don't fit yet; route the disagreement upward
+(step 5) rather than defaulting to narrow because the fuller adoption looked like more
+work.
 
 ## Applying this to a project
 
 Written from doing it once, on an existing repo. It should hold for a new
 one too — a new repo is the same list with less to reconcile.
 
-**1. Wire up the plugin.** Add the two keys above to `.claude/settings.json`
-and commit it. Nothing is copied; nothing else is installed.
+**1. Wire up the plugin, and vendor the self-heal script.** Add the two keys above to
+`.claude/settings.json` and commit it. Also vendor
+[`ensure-installed.sh`](plugins/sdlc/scripts/ensure-installed.sh) as a `SessionStart` hook
+in that same file, per
+[`docs/packaging.md`](docs/packaging.md#known-gap-intermittent-auto-install-failure) —
+**do this now, not reactively.** This used to be listed as optional, added only after a
+project hit the auto-install failure — carpooled changed that: the failure is silent (no
+error, the plugin is just absent), and it let [carpooled#116](https://github.com/packagedeallabs-ship-it/carpooled/pull/116),
+a real code change, merge with the docs-before-PR gate never running and nobody noticing
+until an unrelated PR (carpooled#118) surfaced it weeks later. There's no reliable way to
+detect the failure without the hook in place, so every new adopter vendors it from the
+start. Confirm it worked in a **separate fresh session** afterward, not the one that added
+it — see [`docs/upgrading.md`](docs/upgrading.md)'s verification steps for why.
 
 **2. Do not restructure anything yet.** The standard applies going forward.
 Existing branches, merged PRs and current doc layout are left alone. If the
@@ -467,21 +483,16 @@ routes questions upward stalls waiting on a repo with no evidence to answer
 from. What keeps the standard describing practice rather than aspiration is
 the traffic going both directions.
 
-**7. Vendor the optional pieces, if taking the full layer.** Nothing above requires
-these — they're not wired by the two `.claude/settings.json` keys, because a plugin
-cannot write into a consuming repo's own directories (see
-["Choosing how much to take"](#choosing-how-much-to-take)):
+**7. Vendor the remaining optional pieces, if taking the full layer.** Unlike the
+self-heal script in step 1, these are genuinely conditional — not wired by the two
+`.claude/settings.json` keys, because a plugin cannot write into a consuming repo's own
+directories (see ["Choosing how much to take"](#choosing-how-much-to-take)):
 
 - Copy [`plugins/sdlc/templates/pull_request_template.md`](plugins/sdlc/templates/pull_request_template.md)
   to the project's own `.github/pull_request_template.md`.
 - If the project's docs cross-reference each other, copy
   [`carpooled/scripts/check-links.mjs`](https://github.com/packagedeallabs-ship-it/carpooled/blob/main/scripts/check-links.mjs)
   and wire it into CI, per [`documentation.md`](plugins/sdlc/standards/documentation.md#link-integrity-is-enforced-not-hoped-for).
-- If a fresh session ever fails to auto-install the plugin, vendor
-  [`ensure-installed.sh`](plugins/sdlc/scripts/ensure-installed.sh) as a self-heal
-  `SessionStart` hook in the project's own settings, per
-  [`docs/packaging.md`](docs/packaging.md#known-gap-intermittent-auto-install-failure) —
-  don't add this preemptively; it's a mitigation for an observed failure, not a default.
 
 **8. Add a row to this repo's [`CONSUMERS.md`](CONSUMERS.md).** The one piece of
 adoption bookkeeping that lives here, not in the adopting project — easy to forget

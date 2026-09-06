@@ -46,4 +46,5 @@ claude plugin install "$PLUGIN_ID" >&2 || {
   exit 0
 }
 
-echo "sdlc-standards: installed $PLUGIN_ID" >&2
+echo "sdlc-standards: installed $PLUGIN_ID — its skills won't be invocable in this" \
+     "session yet; run /reload-plugins now, or start a fresh session" >&2

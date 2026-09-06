@@ -3,6 +3,24 @@
 All notable changes to the `sdlc` plugin are recorded here. Versions refer to
 [`plugins/sdlc/.claude-plugin/plugin.json`](plugins/sdlc/.claude-plugin/plugin.json).
 
+## 0.6.0
+
+Prompted by [carpooled#118](https://github.com/packagedeallabs-ship-it/carpooled/pull/118),
+which independently reinvented the 0.4.0 self-heal script after carpooled never actually
+vendored it — and by the time it did, the silent failure had already let
+[carpooled#116](https://github.com/packagedeallabs-ship-it/carpooled/pull/116) merge with
+the docs-before-PR gate never running, undetected for weeks.
+
+- **Vendoring the self-heal script is now step 1 of adoption, not an optional step 7
+  added reactively.** The auto-install failure is silent — no error, nothing to notice —
+  so there is no reliable way to detect it without the hook already in place. See
+  [`README.md`](README.md#applying-this-to-a-project) and
+  [`docs/packaging.md`](docs/packaging.md#known-gap-intermittent-auto-install-failure).
+- **`ensure-installed.sh` now warns after a successful install** that its skills aren't
+  necessarily usable in the same session — verified against Claude Code's actual behavior
+  (skills enumerate at session start; `/reload-plugins` can refresh mid-session). Also
+  reflected in `docs/upgrading.md`'s verification steps.
+
 ## 0.5.0
 
 A consistency audit across every known consumer (2026-09-02), ahead of a documentation
