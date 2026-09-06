@@ -84,6 +84,18 @@ step. **This is intermittent, not deterministic** — it will pass a one-off tes
 fail in the field, which is worse than a failure that's always reproducible. Root cause not
 found yet; treat this as a durable mitigation, not a fix.
 
+**This failure is also silent — no error, nothing to notice — which is what makes it
+worse than merely intermittent.** [carpooled#116](https://github.com/packagedeallabs-ship-it/carpooled/pull/116),
+a legitimate code change, merged with zero files touched under `docs/` or `README.md` — the
+docs-before-PR `PreToolUse` hook simply wasn't there to block it, because the plugin
+silently wasn't installed in that session. Nobody noticed until an unrelated PR
+(carpooled#118, opened independently to fix the same underlying gap) surfaced it weeks
+later. **This is why vendoring the self-heal script is step 1 of every adoption as of
+2026-09-06, not an optional step 7 added reactively after a project happens to hit the
+failure** — there is no reliable way to detect this failure without the hook already in
+place, so waiting for a visible symptom means some window of undetected exposure by
+design.
+
 **Mitigation: a self-healing `SessionStart` hook in the consuming project.** This has to
 live in the *consuming project's own* `.claude/settings.json`, not in this plugin's
 `hooks/hooks.json` — the whole failure mode is that the plugin isn't installed yet, so a
@@ -118,6 +130,13 @@ so it's safe to run on every session start. When it isn't, it adds the marketpla
 installs the plugin, logging what it did to stderr. See
 [`docs/upgrading.md`](upgrading.md) for the full self-contained prompt to add this to an
 existing project.
+
+**A plugin the hook just installed isn't necessarily usable in that same session.**
+Verified 2026-09-06: skills are enumerated at session start, so a plugin installed mid-session
+by this hook does not make its skills invocable until either a fresh session starts, or
+`/reload-plugins` is run in the current one — the script's own output says so. Don't assume
+`/sdlc:create-pr` is available just because the hook reported a successful install; check for
+the skill (or run `/reload-plugins`) before relying on it in the same session.
 
 ## Enforcement: the PreToolUse docs-before-PR gate
 

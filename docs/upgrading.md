@@ -52,6 +52,10 @@ above) and confirm, in order:
    recognize the skill (even if it then reports there's nothing to do, e.g. you're on
    `main` with a clean tree). If the skill isn't found, the self-heal hook didn't fire or
    the marketplace still isn't syncing; check the hook's stderr output at session start.
+   This step exists precisely because a plugin installed mid-session isn't necessarily
+   usable in that same session — skills are enumerated at session start, so this has to be
+   checked in a fresh one (or after running `/reload-plugins`), not the session that ran
+   the install.
 2. **`/create-pr` is invocable by name**, not just present — say "create a PR for this"
    without the literal slash command and confirm the skill triggers (`when_to_use` should
    make this fire; if it doesn't, that's a separate regression worth reporting upstream).
