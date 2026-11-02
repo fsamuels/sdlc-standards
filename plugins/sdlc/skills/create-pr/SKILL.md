@@ -1,6 +1,6 @@
 ---
 name: create-pr
-description: Bring project docs up to date with the current branch's changes per the docs-before-PR gate, run repo checks, then push and open a PR against main.
+description: Rebase the current branch onto main (resolving conflicts), bring project docs up to date with its changes per the docs-before-PR gate, run repo checks, then push and open a PR against main.
 when_to_use: The user says "create a PR" / "open a PR" / "ship this", or you've just finished a change and pushing it is the natural next step.
 argument-hint: [optional extra context for the PR description]
 allowed-tools: Bash(git *) Bash(gh pr create *) Bash(gh pr view *) Bash(command -v gh) Bash(node *) Bash(npx *) Bash(npm run *) Bash(npm ci *) Bash(pnpm *) Bash(cat *) mcp__github__create_pull_request
@@ -20,17 +20,41 @@ docs are **already accurate** — no separate doc-catchup pass needed later.
    obvious from the conversation), then continue on the new branch rather than stopping to ask
    the user to do it separately.
 
-2. **Fetch and diff against main:**
+2. **Bring the branch up to date with main, then diff against it.** Do this before touching
+   any docs. The docs have to describe the code as it will merge, and `main` may have moved
+   since the branch was cut. That includes changes to the very docs this PR is about to edit,
+   such as another PR's `STATUS.md` entry.
 
    ```
    git fetch origin main
+   git rebase origin/main
+   ```
+
+   - **Conflicts:** resolve each one by reading both sides and keeping both intents, then
+     `git add` the file and `git rebase --continue`. Regenerate lockfiles and generated files
+     with the project's own tooling (`pnpm install`, a codegen script, and so on) instead of
+     hand-merging them. For a doc both sides added entries to (a status log, a decisions
+     log), keep both entries in order, and renumber this branch's IDs if `main` already used
+     them.
+   - **Stop and ask** only when both sides changed the same logic and either choice loses
+     behavior. Run `git rebase --abort` first so the branch is left as it was.
+   - **Don't rebase someone else's work.** If `origin/<branch>` has commits this session or
+     the user didn't make (a collaborator pushed to it), run `git merge origin/main` instead
+     and resolve the conflicts the same way, so their checkout isn't broken.
+   - A rebase of a branch that's already pushed rewrites its history, so step 8 has to push
+     with `--force-with-lease`.
+
+   Then diff against the updated base:
+
+   ```
    git log origin/main..HEAD --oneline
    git diff origin/main...HEAD --stat
    git diff origin/main...HEAD
    ```
 
    Read the actual diff, not just the file list — doc updates need to reflect what really
-   changed.
+   changed. Step 6's checks run after this, so they test the rebased result, not the stale
+   base.
 
 3. **Find the project's documentation map.** `documentation.md` requires every project on this
    standard to carry a table of its docs in the README. Read that table rather than assuming
@@ -75,7 +99,9 @@ docs are **already accurate** — no separate doc-catchup pass needed later.
    new commit (never amend). Use a HEREDOC commit message describing what was brought up to
    date, per standard commit conventions.
 
-8. **Push:** `git push -u origin HEAD`.
+8. **Push:** `git push -u origin HEAD`. If step 2 rebased a branch that was already on the
+   remote, use `git push --force-with-lease -u origin HEAD` instead. Never use a plain
+   `--force`: with-lease refuses to overwrite commits someone else pushed in the meantime.
 
 9. **Open the PR — detect which PR-creation path this environment actually has, don't assume
    `gh`.** Some environments (Claude Code on the web, other remote sessions) have no `gh` CLI at
