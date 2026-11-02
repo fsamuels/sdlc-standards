@@ -3,6 +3,19 @@
 All notable changes to the `sdlc` plugin are recorded here. Versions refer to
 [`plugins/sdlc/.claude-plugin/plugin.json`](plugins/sdlc/.claude-plugin/plugin.json).
 
+## 0.7.0
+
+- **`create-pr` now brings the branch up to date with `main` before it touches docs.** Step 2
+  used to fetch `main` and diff against it, but never rebased or handled conflicts. A branch
+  cut before another PR merged could have its docs written against a stale base, and could
+  open with conflicts in the same docs it had just edited (for example two `STATUS.md`
+  entries, or two `D-<N>` decisions with the same number). Step 2 now rebases onto
+  `origin/main` and resolves conflicts: both intents are kept, lockfiles and generated files
+  are regenerated with project tooling, and colliding doc IDs are renumbered. It stops and
+  asks only when either side's choice would lose behavior. On a branch someone else has
+  pushed to, it merges `main` instead of rebasing. Step 8 pushes with `--force-with-lease`
+  after rebasing a branch that was already pushed.
+
 ## 0.6.0
 
 Prompted by [carpooled#118](https://github.com/packagedeallabs-ship-it/carpooled/pull/118),

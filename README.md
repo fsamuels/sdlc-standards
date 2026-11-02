@@ -74,6 +74,9 @@ upward.
   `PATH` and falls back to a GitHub MCP tool
   (`mcp__github__create_pull_request`) when it isn't, rather than assuming
   every environment has it — see audit 5.
+- **`create-pr` syncs with `main` first.** It rebases onto `origin/main` and resolves
+  conflicts before writing docs, so the docs describe the code as it will merge — see
+  [`CHANGELOG.md`](CHANGELOG.md#070).
 - **Auto-install self-heal, vendored by default.** A vendorable
   [`ensure-installed.sh`](plugins/sdlc/scripts/ensure-installed.sh) script mitigates an
   intermittent, *silent* failure where a project's plugin declaration doesn't sync on a
