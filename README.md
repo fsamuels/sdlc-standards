@@ -61,6 +61,10 @@ upward.
   chore-corral's proven local skills (see
   [audit 3](#audit-3--chore-corral-2026-08-16)) rather than designed from
   scratch.
+- **End-to-end shipping** — `/sdlc:ship <feature>` chains `new-branch`,
+  implementation, `create-pr`, a code review posted to the PR, a fix round
+  and a merge on green CI (`--no-merge` stops before the merge). See
+  [`plugins/sdlc/skills/ship/`](plugins/sdlc/skills/ship/SKILL.md).
 - **Docs-before-PR, enforced.** `create-pr` is advisory — a session can skip
   it and call a PR-creation tool directly, which happened in carpooled on
   2026-08-21 (see [audit 4](#audit-4--carpooled-2026-08-21)). A `PreToolUse`

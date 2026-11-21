@@ -3,6 +3,16 @@
 All notable changes to the `sdlc` plugin are recorded here. Versions refer to
 [`plugins/sdlc/.claude-plugin/plugin.json`](plugins/sdlc/.claude-plugin/plugin.json).
 
+## 0.7.0
+
+- **New skill: `/sdlc:ship`** —
+  [`plugins/sdlc/skills/ship/SKILL.md`](plugins/sdlc/skills/ship/SKILL.md). Takes a feature
+  description to a merged PR: optional clarifying questions, `/sdlc:new-branch`, build and
+  test, `/sdlc:create-pr`, a `code-review` pass posted as inline PR comments, a fix round
+  (fix what's wrong or cheap, answer the rest on its thread), wait for CI, then merge on green
+  unless `--no-merge` is passed. Generalized from a chore-corral session (2026-11-13, PR #142)
+  that ran this sequence by hand.
+
 ## 0.6.0
 
 Prompted by [carpooled#118](https://github.com/packagedeallabs-ship-it/carpooled/pull/118),
