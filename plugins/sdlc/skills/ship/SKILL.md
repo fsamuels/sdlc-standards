@@ -1,7 +1,8 @@
 ---
 name: ship
 description: Take a feature description from idea to merged PR — branch, build, open the PR, run a code review on it, fix what matters, answer every comment, and merge once CI is green.
-when_to_use: The user describes a feature or change and asks to build it end to end ("ship this", "build X and merge it", "do the whole thing"), or invokes /sdlc:ship.
+when_to_use: Only when the user types /sdlc:ship. Because it merges by default, it never starts on its own from a feature description.
+disable-model-invocation: true
 argument-hint: [--no-merge] [--review low|medium|high] <feature description>
 allowed-tools: Bash(git *) Bash(gh pr *) Bash(gh run *) Bash(command -v gh) Bash(node *) Bash(npx *) Bash(npm run *) Bash(npm ci *) Bash(pnpm *) Bash(cat *)
 ---
@@ -12,6 +13,9 @@ One command from a feature description to a merged PR, chaining this plugin's ow
 (`/sdlc:new-branch`, `/sdlc:create-pr`) with a code review and a fix loop. Generalized from a
 chore-corral session (2026-11-13) that ran this exact sequence by hand — see the CHANGELOG
 entry for 0.7.0.
+
+The skill only runs when the user types `/sdlc:ship` (`disable-model-invocation: true`), so a
+feature described in passing never triggers an auto-merge.
 
 **Invoking this skill is the user's permission to push, open a PR, comment on it, and — unless
 `--no-merge` is given — merge it.** That permission covers this one PR only.

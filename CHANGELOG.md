@@ -11,7 +11,8 @@ All notable changes to the `sdlc` plugin are recorded here. Versions refer to
   test, `/sdlc:create-pr`, a `code-review` pass posted as inline PR comments, a fix round
   (fix what's wrong or cheap, answer the rest on its thread), wait for CI, then merge on green
   unless `--no-merge` is passed. Generalized from a chore-corral session (2026-11-13, PR #142)
-  that ran this sequence by hand.
+  that ran this sequence by hand. It sets `disable-model-invocation: true`, so it runs only when
+  the user types `/sdlc:ship`. Because it merges by default, it never starts on its own.
 
 ## 0.6.0
 

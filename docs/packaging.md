@@ -47,6 +47,10 @@ implementation (see the sdlc-standards README's audit 3) rather than designed fr
 (`mcp__github__create_pull_request`) when it isn't — some Claude Code environments (the
 web, other remote sessions) have no `gh` CLI at all.
 
+`skills/` also ships `ship`, which chains the other two with a code review, a fix round and a
+merge on green CI. It sets `disable-model-invocation: true`, so it runs only when a user types
+`/sdlc:ship` and never starts on its own.
+
 A consuming project opts in with two keys in `.claude/settings.json`:
 
 ```json
