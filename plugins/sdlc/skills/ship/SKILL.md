@@ -64,6 +64,51 @@ Rules for every delegation:
 - **Don't delegate small work.** If the whole feature is a few lines in one or two files,
   do it inline — spawning costs more than it saves.
 
+## Concurrent development and merge conflicts
+
+Other people, other `/sdlc:ship` runs, and bots merge into `main` while this run is in flight,
+so the branch can fall behind or conflict at any step. Handle it the same way everywhere:
+
+**Sync points.** Fetch and integrate `origin/main` at four moments: right after branching
+(step 2), before opening the PR (step 4), whenever the PR reports `behind` or `dirty` while
+waiting on CI (step 7), and immediately before merging (step 8).
+
+```
+git fetch origin main
+git merge origin/main        # no-op if already up to date
+```
+
+**Merge `origin/main` into the branch; don't rebase.** This skill never amends or force-pushes,
+and a rebase of a pushed branch needs a force-push. A merge commit is a normal new commit.
+
+**Resolving a conflict:**
+
+- **Mechanical** — both sides changed adjacent lines, CHANGELOG or docs-map entries, import
+  lists: resolve inline, keeping *both* sides' intent.
+- **Generated files** (lockfiles, snapshots, build output): don't hand-merge. Take `main`'s
+  version, then regenerate with the repo's own command.
+- **Semantic** — both sides changed the same logic, or main changed an interface this branch
+  uses: read the other change's commit and PR to learn what it was for, then resolve in the
+  main thread or an `opus` subagent. Conflicts in design-risk territory (see above) are never
+  delegated below `opus`.
+- **Never** resolve by taking one side wholesale (`-X ours`/`-X theirs`, `checkout --ours`) on
+  hand-written code, or by dropping someone else's change to make the merge go through.
+- If you can't tell what the other side intended, **stop and ask** with both versions quoted.
+
+**After any merge from `main`:** re-run the repo's checks — a clean textual merge can still
+break the build. If it pulled in changes to files this PR touches, or any resolved conflict was
+semantic, treat the result as a new head: re-run the review (step 5) on the new diff and
+re-answer affected threads. If the merge was a clean no-op for this PR's files, a green check
+run is enough. Commit and push as a new commit.
+
+**Within one run.** Parallel subagents own disjoint files, so they shouldn't conflict. If two
+still edited the same file, the main thread reconciles it before checks, and tightens the next
+slice split.
+
+**Alongside other runs.** If another uncommitted change or branch checkout is already in the
+working tree, don't ship from it — see the stop conditions below. A second `/sdlc:ship` on the
+same repo belongs in its own `git worktree`.
+
 ## Arguments
 
 - `--no-merge` — stop at a green, reviewed PR and report; don't merge.
@@ -88,7 +133,8 @@ then proceed. Don't ask about things with an obvious default; pick it and mentio
 
 Run `/sdlc:new-branch` inline with the type that fits the work (`feature`, `bugfix`, …) and a
 slug from the description. On a platform-assigned `claude/*` branch, follow `core.md`'s rule for
-those branches.
+those branches. It branches from the latest `origin/main`; if a long clarify step or build
+follows, sync again per "Concurrent development" before step 4.
 
 ### 3. Build
 
@@ -105,7 +151,7 @@ those branches.
 
 ### 4. Open the PR
 
-Run `/sdlc:create-pr`. It updates docs, re-runs checks, pushes, and opens the PR. Note the PR
+Sync with `origin/main` first (see "Concurrent development"), then run `/sdlc:create-pr`. It updates docs, re-runs checks, pushes, and opens the PR. Note the PR
 number.
 
 ### 5. Review the PR
@@ -158,13 +204,18 @@ interfaces); stop when a round finds nothing new.
 Prefer an event over polling: if `subscribe_pr_activity` is available, subscribe and end the
 turn; you'll be woken by CI results. Otherwise poll `gh pr checks <PR#>` at a sensible interval.
 
+**If the PR goes `behind` or `dirty`** (a merge landed on `main`, or two PRs now conflict),
+sync and resolve per "Concurrent development", push, and wait again; CI restarts on the new head.
+
 **If CI fails:** find the root cause, fix it, push, and wait again. Re-run a job at most once.
 Never skip, disable, or weaken a test to get green, and never push an empty commit to retrigger
 CI. If you can't fix it after a real attempt, stop and report the failure with its log excerpt.
 
 ### 8. Merge
 
-Merge only when **all** of these hold on the current head SHA:
+Sync with `origin/main` one last time. If that brings in anything, push and go back to step 7 —
+the checks that matter are the ones on the head you're about to merge. Then merge only when
+**all** of these hold on the current head SHA:
 
 - every check is `success` (none pending, none failed),
 - the PR is mergeable with no conflict (`mergeable_state` clean),
@@ -188,4 +239,6 @@ Unsubscribe from PR activity and cancel any scheduled check-ins. Report to the u
 - the working tree has uncommitted changes you didn't make,
 - a check fails and the cause isn't in this PR's diff,
 - a human reviewer requests changes you'd have to guess at,
+- a conflict's resolution depends on intent you can't determine from either side's commits,
+- `main` keeps moving so fast that syncing re-triggers CI three times without a merge,
 - the merge would need permissions or a bypass the session doesn't have.

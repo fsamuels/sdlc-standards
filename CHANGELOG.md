@@ -3,6 +3,16 @@
 All notable changes to the `sdlc` plugin are recorded here. Versions refer to
 [`plugins/sdlc/.claude-plugin/plugin.json`](plugins/sdlc/.claude-plugin/plugin.json).
 
+## 0.8.1
+
+- **`/sdlc:ship` handles concurrent development and merge conflicts.** New "Concurrent
+  development" section: sync `origin/main` at four points (after branching, before the PR,
+  while waiting on CI, before merging) by merging, never rebasing, since the skill doesn't
+  force-push. Conflicts are classed mechanical / generated / semantic, with no wholesale
+  `ours`/`theirs` on hand-written code, `opus` for design-risk conflicts, and stop-and-ask when
+  intent is unclear. Checks re-run after every sync, and a semantic resolution triggers a
+  re-review. See [`plugins/sdlc/skills/ship/SKILL.md`](plugins/sdlc/skills/ship/SKILL.md).
+
 ## 0.8.0
 
 - **`/sdlc:ship` now delegates to subagents to cut cost and parallelize.** The skill runs its
