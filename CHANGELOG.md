@@ -3,6 +3,22 @@
 All notable changes to the `sdlc` plugin are recorded here. Versions refer to
 [`plugins/sdlc/.claude-plugin/plugin.json`](plugins/sdlc/.claude-plugin/plugin.json).
 
+## 0.8.0
+
+- **`/sdlc:ship` now delegates to subagents to cut cost and parallelize.** The skill runs its
+  orchestration on `model: sonnet` and hands bulk work to subagents with an explicit model:
+  `Explore` on `haiku` for code mapping, `sonnet` for implementation slices, `haiku` for
+  mechanical fixes, and no downgrade for design-risk work. Independent slices (disjoint files,
+  interfaces fixed up front) fan out in parallel. Subagents never touch git, the PR or CI, and
+  the main thread verifies their diff before moving on. See
+  [`plugins/sdlc/skills/ship/SKILL.md`](plugins/sdlc/skills/ship/SKILL.md).
+- **Design risk is explicit and routes to Opus.** Slices that touch auth/security, schema or
+  persisted data, money, concurrency, public interfaces, or have no repo pattern to copy go to
+  `opus`; when unsure, treat as risky; never `haiku`.
+- **Review is chosen by diff risk.** Routine diffs use `code-review`; risky diffs get a direct
+  `opus` reviewer subagent (the skill takes an effort level, not a model), plus `security-review`
+  for security-related changes. A slice's own subagent never reviews its own work.
+
 ## 0.7.0
 
 - **New skill: `/sdlc:ship`** —

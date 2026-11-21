@@ -50,6 +50,8 @@ web, other remote sessions) have no `gh` CLI at all.
 `skills/` also ships `ship`, which chains the other two with a code review, a fix round and a
 merge on green CI. It sets `disable-model-invocation: true`, so it runs only when a user types
 `/sdlc:ship` and never starts on its own.
+It runs its orchestration on `sonnet` and delegates code mapping, implementation slices and
+mechanical fixes to cheaper-model subagents, in parallel where the work is independent.
 
 A consuming project opts in with two keys in `.claude/settings.json`:
 
