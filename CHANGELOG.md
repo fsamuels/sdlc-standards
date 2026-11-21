@@ -1,7 +1,16 @@
 # Changelog
 
 All notable changes to the `sdlc` plugin are recorded here. Versions refer to
-[`plugins/sdlc/.claude-plugin/plugin.json`](plugins/sdlc/.claude-plugin/plugin.json).
+[`plugins/sdlc/.claude-plugin/plugin.json`](plugins/sdlc/.claude-plugin/plugin.json). What
+earns a minor vs a patch is defined in [`docs/packaging.md`](docs/packaging.md#versioning).
+
+## 0.8.3
+
+- **Versioning policy written down**, in [`docs/packaging.md`](docs/packaging.md#versioning).
+  Minor vs patch is decided by adopter impact (new or changed behavior, rules, scripts, skills
+  or standards text is a minor; wording and link fixes are a patch), and a PR bumps the version
+  itself. Prompted by 0.8.1 and 0.8.2 being patches when, under this policy, both were minors.
+  Releases keep the numbers they were given.
 
 ## 0.8.2
 
