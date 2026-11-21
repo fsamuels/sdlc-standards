@@ -3,8 +3,9 @@ name: ship
 description: Take a feature description from idea to merged PR — branch, build, open the PR, run a code review on it, fix what matters, answer every comment, and merge once CI is green.
 when_to_use: Only when the user types /sdlc:ship. Because it merges by default, it never starts on its own from a feature description.
 disable-model-invocation: true
+model: sonnet
 argument-hint: [--no-merge] [--review low|medium|high] <feature description>
-allowed-tools: Bash(git *) Bash(gh pr *) Bash(gh run *) Bash(command -v gh) Bash(node *) Bash(npx *) Bash(npm run *) Bash(npm ci *) Bash(pnpm *) Bash(cat *)
+allowed-tools: Agent Bash(git *) Bash(gh pr *) Bash(gh run *) Bash(command -v gh) Bash(node *) Bash(npx *) Bash(npm run *) Bash(npm ci *) Bash(pnpm *) Bash(cat *)
 ---
 
 # Ship
@@ -20,6 +21,49 @@ feature described in passing never triggers an auto-merge.
 **Invoking this skill is the user's permission to push, open a PR, comment on it, and — unless
 `--no-merge` is given — merge it.** That permission covers this one PR only.
 
+## Cost and parallelism: who does what
+
+The main thread is an orchestrator on a mid-tier model (`model: sonnet` above; a user can
+override it per session). It keeps the decisions — what to build, how to triage review
+findings, whether to merge — and delegates bulk work to subagents with an explicit `model`, so
+tokens are spent at the cheapest tier that does the job and independent work runs in parallel.
+
+| Work | Subagent | Model |
+| --- | --- | --- |
+| Reading code, mapping what a feature touches | `Explore` | `haiku` |
+| Implementing one self-contained slice, with its tests | `general-purpose` | `sonnet` |
+| Mechanical fixes: renames, lint/format, doc and changelog edits, simple review fixes | `general-purpose` | `haiku` |
+| A slice with design risk (see below) | `general-purpose` | `opus` |
+
+**Design risk means Opus.** A slice is design-risky if a mistake in it would be expensive or
+silent, not merely visible in a test. Use `model: opus` for any slice that:
+
+- changes auth, permissions, secrets handling, or anything security-sensitive;
+- changes a database schema, runs a migration, or touches persisted data formats;
+- handles money, billing, quotas, or other numbers users rely on being exact;
+- involves concurrency, ordering, retries, caching, or transactional behavior;
+- changes a public interface, API contract, or shared type that other code depends on;
+- has no existing pattern in the repo to copy, so the approach itself is a judgment call.
+
+When unsure whether a slice qualifies, treat it as risky. A wrongly-upgraded slice costs a few
+tokens; a wrongly-downgraded one costs a bad merge. Never send risky work to `haiku`. The same
+rule applies to the fix round: a review finding in risk territory goes to `opus` or stays in the
+main thread.
+
+Rules for every delegation:
+
+- **Brief it fully.** A subagent starts cold: give the goal, the exact files it owns, the
+  repo conventions it must follow, and what to return (a short summary, not file dumps).
+- **Parallel only when disjoint.** Launch subagents in one message only if they touch
+  different files and none needs another's output. Anything that shares a file, or builds on
+  another slice's interface, runs sequentially or stays in the main thread.
+- **Subagents don't touch git, the PR, or CI.** They edit files and run local checks.
+  Branching, committing, pushing, review replies and merging stay in the main thread.
+- **Verify, don't trust.** After subagents return, read the diff and run the repo's checks
+  yourself before moving on. A subagent's "done" is a claim.
+- **Don't delegate small work.** If the whole feature is a few lines in one or two files,
+  do it inline — spawning costs more than it saves.
+
 ## Arguments
 
 - `--no-merge` — stop at a green, reviewed PR and report; don't merge.
@@ -32,6 +76,8 @@ feature described in passing never triggers an auto-merge.
 ### 1. Understand the feature
 
 Read the project's docs map (README) and the code the feature touches before deciding anything.
+For a feature that spans many files, delegate the mapping to an `Explore` subagent
+(`model: haiku`) and have it return the relevant files, existing patterns, and test layout.
 
 **Clarify only when the description leaves a real choice open** — one that changes what you
 build and that the code can't settle (e.g. "my time" vs. the whole team's; which page it goes
@@ -46,10 +92,16 @@ those branches.
 
 ### 3. Build
 
+- **Plan the split first.** List the slices of the change (e.g. data layer, API, UI, tests)
+  and the files each owns. If they're disjoint and each stands alone, hand each to its own
+  subagent (`sonnet`, or `haiku` for mechanical ones), launched together in one message. Define
+  shared interfaces (types, function signatures) in the main thread *before* fanning out, so
+  slices agree. If slices overlap or the change is small, build inline.
 - Implement the change following the repo's existing patterns. Put logic in pure, testable
-  functions where the codebase does.
-- Add or update tests for the new behavior.
-- Run the repo's checks (format, lint, typecheck, test) and fix failures before moving on.
+  functions where the codebase does. Add or update tests for the new behavior.
+- When the subagents return, review the combined diff for seams and duplicated helpers, then
+  run the repo's checks (format, lint, typecheck, test) in the main thread and fix failures
+  before moving on.
 
 ### 4. Open the PR
 
@@ -58,12 +110,24 @@ number.
 
 ### 5. Review the PR
 
-Run the `code-review` skill against the PR at the chosen level with `--comment`, so findings
-land as inline PR comments (e.g. `/code-review medium <PR#> --comment`).
+Pick the reviewer by what the diff touches, using the same design-risk list as in "Cost and
+parallelism":
 
-If `code-review` isn't available in this environment, review the diff yourself for correctness
-bugs, missed edge cases, and duplication, and post each finding as an inline review comment
-with a GitHub MCP tool or `gh`.
+- **No risk triggers:** run the `code-review` skill against the PR at the chosen level with
+  `--comment`, so findings land as inline PR comments (e.g. `/code-review medium <PR#> --comment`).
+- **Any risk trigger:** spawn a `general-purpose` subagent with `model: opus` to review the diff
+  itself — read the PR diff and the surrounding code, look for correctness bugs, missed edge
+  cases, and duplication, and return findings with file, line and rationale. Post each one as an
+  inline PR comment from the main thread. The `code-review` skill takes an effort level, not a
+  model, so wrapping it would not guarantee Opus does the reading.
+- **Security-related diff** (auth, secrets, permissions, input handling): in addition, have that
+  Opus subagent run `security-review` and post its findings the same way.
+
+The reviewer should be a different model run than the one that wrote the code; never have a
+slice's own subagent review its own work.
+
+If `code-review` isn't available in this environment, review the diff yourself (or via the Opus
+subagent above) and post each finding as an inline review comment with a GitHub MCP tool or `gh`.
 
 ### 6. Fix and answer
 
@@ -78,7 +142,9 @@ Sort the findings:
 
 Then:
 
-1. Make the fixes, with a test for each behavioral one. Re-run the repo's checks.
+1. Make the fixes, with a test for each behavioral one. Independent fixes in different files
+   can go to parallel subagents (`haiku` for the simple ones, `sonnet` otherwise); fixes to
+   behavior with design risk stay in the main thread. Re-run the repo's checks.
 2. Commit and push (a new commit — never amend or force-push).
 3. Reply on **every** thread: "Fixed in `<sha>`: …" or the reason it's not changed.
 4. Resolve the threads you fixed. Leave answered-but-unfixed threads open for the user.
