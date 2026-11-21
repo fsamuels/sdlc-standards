@@ -3,6 +3,15 @@
 All notable changes to the `sdlc` plugin are recorded here. Versions refer to
 [`plugins/sdlc/.claude-plugin/plugin.json`](plugins/sdlc/.claude-plugin/plugin.json).
 
+## 0.8.2
+
+- **ID-collision stopgap.** `documentation.md` now allows renumbering IDs that exist only on an
+  unmerged branch (never ones on `main`) and requires a duplicate-ID check in CI. New
+  [`scripts/check-duplicate-ids.mjs`](plugins/sdlc/scripts/check-duplicate-ids.mjs), a
+  zero-dependency check to vendor. `/sdlc:ship` runs the check after syncing `origin/main` and
+  renumbers only its own new IDs. The structural fix remains an open decision, now piloting in
+  farm-explorer only: [`docs/open-decisions.md`](docs/open-decisions.md).
+
 ## 0.8.1
 
 - **`/sdlc:ship` handles concurrent development and merge conflicts.** New "Concurrent

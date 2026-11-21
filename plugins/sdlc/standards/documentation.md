@@ -68,8 +68,18 @@ from commit messages, from other documents.
 Allocation rules:
 
 - **Always append.** Take the next free number.
-- **Never renumber**, and **never reuse a retired one.** A dangling `F-42` in a
-  six-month-old ticket should still resolve to the right thing.
+- **Never renumber** an ID that has reached `main`, and **never reuse a retired one.** A
+  dangling `F-42` in a six-month-old ticket should still resolve to the right thing. The one
+  exception: an ID that has only ever existed on an unmerged branch isn't published yet. If
+  another branch merged first and took the same number, renumber *your own* new IDs (and the
+  references to them in the same diff) when you sync `origin/main` — never the ones already on
+  `main`.
+- **IDs are unique, checked in CI.** Run a duplicate-ID check next to the link checker, locally
+  and on every pull request; it fails if two table rows define the same ID. A zero-dependency
+  copy is in this plugin at
+  [`scripts/check-duplicate-ids.mjs`](../scripts/check-duplicate-ids.mjs) — vendor it. This is a
+  stopgap: it catches a collision, it doesn't prevent one (see
+  [`open-decisions.md`](../../../docs/open-decisions.md#id-allocation-collides-across-parallel-branches)).
 - **Strike, don't delete.** If an item is dropped, strike the row and say why. The record
   of a decision reversed is worth more than a clean table.
 

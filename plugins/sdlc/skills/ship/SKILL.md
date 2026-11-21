@@ -95,6 +95,15 @@ and a rebase of a pushed branch needs a force-push. A merge commit is a normal n
   hand-written code, or by dropping someone else's change to make the merge go through.
 - If you can't tell what the other side intended, **stop and ask** with both versions quoted.
 
+**ID collisions.** If the project allocates sequential IDs (`F-`, `D-`, `C-`, `OQ-` — see
+`documentation.md`), a clean textual merge can still leave two rows defining the same ID, or a
+conflict on the last line of a shared table. After syncing, run the project's duplicate-ID check
+(`scripts/check-duplicate-ids.mjs`, if vendored) or compare the IDs this branch added against
+`origin/main`'s. For each collision, renumber **only the IDs this branch added**, to the next
+free numbers, and update every reference to them in this branch's diff (docs, code comments,
+the PR description). Never renumber an ID that is already on `main`, and keep a table conflict
+by keeping both sides' rows. Note the renumbering in the PR description.
+
 **After any merge from `main`:** re-run the repo's checks — a clean textual merge can still
 break the build. If it pulled in changes to files this PR touches, or any resolved conflict was
 semantic, treat the result as a new head: re-run the review (step 5) on the new diff and

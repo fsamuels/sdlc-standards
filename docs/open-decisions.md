@@ -55,14 +55,30 @@ Per ID kind, rather than one scheme for everything:
 - **`M` milestones** → unchanged. Planned up front, not allocated from parallel branches.
 - Rules that survive any option: never reuse an ID, strike don't delete, supersede don't remove.
 
+### Stopgap in place (0.8.2)
+
+Until a structural fix settles, collisions are caught and repaired, not prevented:
+`documentation.md` lets a branch renumber IDs only it has ever used, `/sdlc:ship` does that
+automatically when it syncs `origin/main`, and
+[`check-duplicate-ids.mjs`](../plugins/sdlc/scripts/check-duplicate-ids.mjs) fails CI if two rows
+share an ID. None of this fixes the textual collision (adjacent appends to one table).
+
+### Pilot
+
+Decided 2026-11-21: pilot the leaning above in **farm-explorer only** for now — not carpooled.
+Not yet started. farm-explorer already keeps `D-` rows in `docs/project/decisions.md` (122
+lines today), so it has IDs to migrate; check whether it also uses `F-`/`OQ-`/`C-` before deciding
+which kinds to move to files or issue numbers.
+
 ### Still to explore
 
 - Other schemes not yet looked at (e.g. short random/hash IDs, Changesets-style fragment files,
   towncrier-style news fragments keyed by issue number).
 - Whether depending on GitHub issues is acceptable for every adopter, or whether B everywhere
   is the safer, platform-neutral default.
-- Which adopter pilots it. carpooled is the only one using the `F-/D-/C-/OQ-` scheme today
-  ([`roadmap.md`](roadmap.md#the-gap-as-of-2026-09-02)), so migration cost is lowest now.
+- ~~Which adopter pilots it.~~ farm-explorer (see Pilot). carpooled is the only adopter using the
+  `F-/D-/C-/OQ-` scheme today ([`roadmap.md`](roadmap.md#the-gap-as-of-2026-09-02)), so
+  migration cost there is real.
 - Migration of existing carpooled IDs: keep old numeric IDs as aliases, or rewrite references.
 
 ### What would settle it
