@@ -174,6 +174,34 @@ here (see [the standard's own guidance on this](../README.md#applying-this-to-a-
 rather than carrying a local override; a hook that a project routes around silently is worse
 than one that's occasionally wrong in a visible, fixable way.
 
+## Versioning
+
+The plugin is versioned `MAJOR.MINOR.PATCH` in
+[`plugin.json`](../plugins/sdlc/.claude-plugin/plugin.json), the only place the number lives.
+The bump is decided by **adopter impact**: what a consuming project's agents will now do
+differently, or what its maintainers may need to act on. Not by diff size, and not by how
+much of the repo the PR touched.
+
+| Bump | When | Examples |
+| --- | --- | --- |
+| **Minor** | The change adds or alters behavior, a rule, a script, a skill or skill step, a hook, or a stated requirement — anything an adopter might need to adopt, vendor, or react to. Also new guidance in `standards/`, since it is injected into every adopter's sessions. | 0.7.0 `/sdlc:ship`; 0.8.0 subagent delegation; ID-collision stopgap (new rule, new script, new CI requirement); worktree rule in `core.md` |
+| **Patch** | The change fixes wording, a typo, a link, or an example, or repairs behavior to match what was already documented. Nothing an adopter does should change. | Correcting a broken anchor; fixing a skill step that contradicted its own description; README-only clarifications |
+| **Major** | A change that breaks adopters who did nothing wrong: removing or renaming a skill, a standards file, or a hook, or changing a rule so existing compliant projects now fail it. | None yet; the plugin is `0.x`, so breaking changes are called out in the CHANGELOG entry until 1.0 |
+
+Working rules:
+
+- **Bump in the PR that makes the change**, and add the CHANGELOG entry under the same
+  version. A PR that changes only files outside the shipped plugin (`docs/`, `README.md`,
+  `CONSUMERS.md`) doesn't bump at all unless it changes a rule adopters follow.
+- **When in doubt, go up.** An under-bump hides a change adopters needed to see; an over-bump
+  costs one line in a changelog.
+- **Concurrent PRs.** Two open PRs will often claim the same next number. Whichever merges
+  second renumbers its own version and CHANGELOG heading when it syncs `origin/main`. A
+  released number is never reused or edited, in the same spirit as the ID rule in
+  `documentation.md`.
+- **History isn't rewritten.** Releases before this policy keep the numbers they were given;
+  0.8.1 and 0.8.2 would have been minors under it.
+
 ## When to split, and how
 
 The marketplace catalog can list several plugins from this same repo — each entry
