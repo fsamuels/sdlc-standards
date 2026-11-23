@@ -5,7 +5,7 @@ when_to_use: Only when the user types /sdlc:ship. Because it merges by default, 
 disable-model-invocation: true
 model: sonnet
 argument-hint: [--no-merge] [--review low|medium|high] <feature description>
-allowed-tools: Agent Bash(git *) Bash(gh pr *) Bash(gh run *) Bash(command -v gh) Bash(node *) Bash(npx *) Bash(npm run *) Bash(npm ci *) Bash(pnpm *) Bash(cat *)
+allowed-tools: Agent Bash(git *) Bash(gh pr *) Bash(gh run *) Bash(gh api repos/*) Bash(command -v gh) Bash(node *) Bash(npx *) Bash(npm run *) Bash(npm ci *) Bash(pnpm *) Bash(cat *)
 ---
 
 # Ship
@@ -230,13 +230,20 @@ the checks that matter are the ones on the head you're about to merge. Then merg
 - the PR is mergeable with no conflict (`mergeable_state` clean),
 - every review thread has a reply, and no new comments arrived since you last read them.
 
-Use the repo's usual merge method (look at recent merges on `main`; default to a merge commit)
-and pass the expected head SHA so a late push can't slip in. With `--no-merge`, skip this and
+Merge with a squash and delete the branch (`gh pr merge <PR#> --squash --delete-branch`), per
+`core.md`'s merge rule, and pass the expected head SHA (`--match-head-commit`) so a late push
+can't slip in. Squash is the standard regardless of how earlier PRs in the repo were merged. If
+the repo rejects it because squash merging is disabled, run `configure-github-repo.sh --check`
+(or `gh api repos/{owner}/{repo}`) and report which setting is wrong; don't fall back to a merge
+commit. Before merging, make sure the PR title and description read well as a commit message on
+`main`, because that's what the squash records. With `--no-merge`, skip this and
 report the PR as ready.
 
 ### 9. Clean up and report
 
-Unsubscribe from PR activity and cancel any scheduled check-ins. Report to the user:
+Unsubscribe from PR activity and cancel any scheduled check-ins. Remove this run's local branch
+(`git branch -D <branch>`, since a squashed branch never counts as merged) and its worktree if it
+had one, then `git fetch --prune`. Report to the user:
 
 - what shipped (one or two sentences, user-facing),
 - the merge commit or the PR link,
