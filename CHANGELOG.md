@@ -4,6 +4,20 @@ All notable changes to the `sdlc` plugin are recorded here. Versions refer to
 [`plugins/sdlc/.claude-plugin/plugin.json`](plugins/sdlc/.claude-plugin/plugin.json). What
 earns a minor vs a patch is defined in [`docs/packaging.md`](docs/packaging.md#versioning).
 
+## 0.9.0
+
+- **Merge standard: squash, then delete the branch.** New "Merging" section in `core.md`:
+  every PR lands on `main` as one squash commit (PR title and body as the message) and its
+  branch is deleted on merge; merge commits and rebase merges are out. New
+  [`scripts/configure-github-repo.sh`](plugins/sdlc/scripts/configure-github-repo.sh) sets the
+  GitHub repo to match (squash-only, `PR_TITLE`/`PR_BODY`, auto-delete head branches) and
+  `--check` reports drift read-only. `/sdlc:ship` now merges with
+  `--squash --delete-branch`, replacing "use the repo's usual method, default to a merge
+  commit", and cleans up its local branch and worktree. `/sdlc:create-pr` reminds that the PR
+  title and description become the commit message. Adopters run the script once (step 1 of
+  adoption). Minor under the [versioning policy](docs/packaging.md#versioning): new rule, new
+  script, changed skill behavior.
+
 ## 0.8.3
 
 - **Versioning policy written down**, in [`docs/packaging.md`](docs/packaging.md#versioning).

@@ -448,6 +448,10 @@ until an unrelated PR (carpooled#118) surfaced it weeks later. There's no reliab
 detect the failure without the hook in place, so every new adopter vendors it from the
 start. Confirm it worked in a **separate fresh session** afterward, not the one that added
 it — see [`docs/upgrading.md`](docs/upgrading.md)'s verification steps for why.
+Also run [`configure-github-repo.sh`](plugins/sdlc/scripts/configure-github-repo.sh) once
+(needs repo admin) so the repo allows only squash merges and deletes branches on merge, per
+[`core.md`](plugins/sdlc/standards/core.md#merging-squash-then-delete-the-branch); its
+`--check` flag reports drift.
 
 **2. Do not restructure anything yet.** The standard applies going forward.
 Existing branches, merged PRs and current doc layout are left alone. If the

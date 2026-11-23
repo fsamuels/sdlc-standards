@@ -104,6 +104,9 @@ docs are **already accurate** — no separate doc-catchup pass needed later.
      and give them the compare URL (`https://github.com/<owner>/<repo>/compare/main...<branch>`)
      to open the PR themselves.
 
+   The PR title and description become the squash commit message on `main` (see `core.md`), so
+   write them as one: an imperative title, and a body that says what changed and why.
+
    Derive the title from the branch name/commits. Fold in any extra context from `$ARGUMENTS`
    if provided.
 

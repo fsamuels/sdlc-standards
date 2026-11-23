@@ -39,6 +39,26 @@ git fetch origin main && git switch -c <prefix>/<slug> origin/main
 Branching off stale local state drags unrelated or already-merged commits into
 the diff and makes review harder.
 
+## Merging: squash, then delete the branch
+
+**Every PR merges to `main` as a squash commit, and its branch is deleted on merge.** One PR is
+one commit on `main`, so `main` reads as a list of changes rather than a record of how each was
+built, and a revert is a single commit.
+
+- **The PR title and description become the commit message**, so write them for `main`'s
+  history: an imperative title, and a body that says what and why. Branch-level commit messages
+  ("fix typo", "address review") are dropped.
+- **Syncing `main` into your branch is still fine.** A merge commit on the branch disappears in
+  the squash, so there is nothing to clean up and no rebase or force-push is needed.
+- **Never use a merge commit or a rebase merge** to land a PR on `main`.
+- **The repo must be configured to match**, since git can't enforce this: squash merging only,
+  PR title and body as the squash message, and "automatically delete head branches" on. Run
+  [`scripts/configure-github-repo.sh`](../scripts/configure-github-repo.sh) once per repo
+  (needs admin); `--check` reports drift without changing anything.
+- Auto-delete removes the remote branch only. Delete your local branch (and any worktree) too:
+  `git branch -D <branch>` after the merge, since a squashed branch is never "merged" as far as
+  `git branch -d` can tell.
+
 ## Platform-assigned branches
 
 Automated and remote sessions (Claude Code on the web, GitHub Actions, and
