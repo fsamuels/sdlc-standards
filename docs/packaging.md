@@ -174,6 +174,31 @@ here (see [the standard's own guidance on this](../README.md#applying-this-to-a-
 rather than carrying a local override; a hook that a project routes around silently is worse
 than one that's occasionally wrong in a visible, fixable way.
 
+## Enforcement: the PreToolUse worktree requirement
+
+[`plugins/sdlc/hooks/require-worktree.mjs`](../plugins/sdlc/hooks/require-worktree.mjs), wired
+into `hooks.json` under one `PreToolUse` matcher (`Edit|Write|NotebookEdit|MultiEdit|Bash`),
+denies work in a repo's *primary* checkout, per
+[`core.md`](../plugins/sdlc/standards/core.md#local-sessions-one-worktree-each).
+
+- **File edits:** the target path's repo is checked, not the session's cwd, so editing a file
+  in a sibling worktree by absolute path from the primary checkout is allowed, and files
+  outside any repo (memory files, scratch directories) are untouched.
+- **Bash:** only `git` commands that change the working tree or index (`commit`, `add`,
+  `switch`, `checkout`, `merge`, `rebase`, `reset`, `stash`, …). Read-only git, `fetch`, `push`,
+  `branch` and `git worktree …` pass, because creating the worktree must be possible from the
+  primary checkout.
+- **Primary vs linked:** `git rev-parse --git-dir` equals `--git-common-dir` only in the
+  primary checkout.
+- **Fails open** when it can't be sure: not a git repo, a path outside a repo, a remote session
+  (`CLAUDE_CODE_REMOTE` set), a command containing `cd` or `git -C` (the real target isn't the
+  cwd), or `SDLC_ALLOW_PRIMARY_CHECKOUT=1`. A command like `cd ../wt && git commit` is therefore
+  allowed even when the cwd is the primary checkout, which makes this a backstop for the common
+  mistake rather than a security boundary.
+- **Unverified assumption:** `CLAUDE_CODE_REMOTE` as the remote-session signal is from memory,
+  not tested against a web session. If remote sessions get blocked, that's the first thing to
+  check.
+
 ## Versioning
 
 The plugin is versioned `MAJOR.MINOR.PATCH` in

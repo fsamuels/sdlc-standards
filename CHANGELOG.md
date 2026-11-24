@@ -4,6 +4,22 @@ All notable changes to the `sdlc` plugin are recorded here. Versions refer to
 [`plugins/sdlc/.claude-plugin/plugin.json`](plugins/sdlc/.claude-plugin/plugin.json). What
 earns a minor vs a patch is defined in [`docs/packaging.md`](docs/packaging.md#versioning).
 
+## 0.10.0
+
+- **Local sessions must use a worktree, and it's enforced.** New "Local sessions: one worktree
+  each" section in `core.md` (replacing the "concurrent agents" draft): every local session
+  works in its own sibling `git worktree`, even when only one is running; remote sessions are
+  exempt. New `PreToolUse` hook
+  [`hooks/require-worktree.mjs`](plugins/sdlc/hooks/require-worktree.mjs) denies file edits and
+  working-tree-changing git commands in the primary checkout, with the command to run instead;
+  `SDLC_ALLOW_PRIMARY_CHECKOUT=1` opts out. `/sdlc:new-branch` creates the worktree
+  (`git worktree add -b … ../<repo>-<slug> origin/main`) from the primary checkout, or switches
+  branch inside a worktree you're already in. `/sdlc:ship` therefore works entirely in its own
+  worktree, removes it after the merge, and warns about open PRs touching the same files.
+  README gains "Running several agents at once". Minor: new rule, new hook, changed skills.
+  **Adopters will see edits in their primary checkout start being blocked**, which is the
+  point; the deny message explains why.
+
 ## 0.9.0
 
 - **Merge standard: squash, then delete the branch.** New "Merging" section in `core.md`:

@@ -5,7 +5,7 @@ when_to_use: Only when the user types /sdlc:ship. Because it merges by default, 
 disable-model-invocation: true
 model: sonnet
 argument-hint: [--no-merge] [--review low|medium|high] <feature description>
-allowed-tools: Agent Bash(git *) Bash(gh pr *) Bash(gh run *) Bash(gh api repos/*) Bash(command -v gh) Bash(node *) Bash(npx *) Bash(npm run *) Bash(npm ci *) Bash(pnpm *) Bash(cat *)
+allowed-tools: Agent EnterWorktree Bash(git *) Bash(gh pr *) Bash(gh run *) Bash(gh api repos/*) Bash(command -v gh) Bash(node *) Bash(npx *) Bash(npm run *) Bash(npm ci *) Bash(pnpm *) Bash(cat *)
 ---
 
 # Ship
@@ -114,9 +114,10 @@ run is enough. Commit and push as a new commit.
 still edited the same file, the main thread reconciles it before checks, and tightens the next
 slice split.
 
-**Alongside other runs.** If another uncommitted change or branch checkout is already in the
-working tree, don't ship from it — see the stop conditions below. A second `/sdlc:ship` on the
-same repo belongs in its own `git worktree`.
+**Alongside other runs.** Each run has its own worktree (step 2), so a second `/sdlc:ship` on
+the same repo never shares a working tree with this one. Two runs can still conflict
+*semantically*: at step 1, list open PRs touching the files you expect to change
+(`gh pr list --json number,title,files`) and warn the user about any overlap before building.
 
 ## Arguments
 
@@ -141,7 +142,10 @@ then proceed. Don't ask about things with an obvious default; pick it and mentio
 ### 2. Branch
 
 Run `/sdlc:new-branch` inline with the type that fits the work (`feature`, `bugfix`, …) and a
-slug from the description. On a platform-assigned `claude/*` branch, follow `core.md`'s rule for
+slug from the description. **This creates a new worktree and moves the run into it** — local
+sessions never work in the primary checkout, and a hook blocks edits and commits there. Every
+later step, including subagents' file edits, happens inside that worktree: give subagents its
+absolute path. On a platform-assigned `claude/*` branch, follow `core.md`'s rule for
 those branches. It branches from the latest `origin/main`; if a long clarify step or build
 follows, sync again per "Concurrent development" before step 4.
 
@@ -241,9 +245,10 @@ report the PR as ready.
 
 ### 9. Clean up and report
 
-Unsubscribe from PR activity and cancel any scheduled check-ins. Remove this run's local branch
-(`git branch -D <branch>`, since a squashed branch never counts as merged) and its worktree if it
-had one, then `git fetch --prune`. Report to the user:
+Unsubscribe from PR activity and cancel any scheduled check-ins. Leave the worktree, then remove it
+(`git worktree remove <path>`) and this run's local branch (`git branch -D <branch>`, since a
+squashed branch never counts as merged), then `git fetch --prune`. If the run stopped early or
+`--no-merge` was given, leave the worktree in place and say where it is. Report to the user:
 
 - what shipped (one or two sentences, user-facing),
 - the merge commit or the PR link,
