@@ -4,6 +4,17 @@ All notable changes to the `sdlc` plugin are recorded here. Versions refer to
 [`plugins/sdlc/.claude-plugin/plugin.json`](plugins/sdlc/.claude-plugin/plugin.json). What
 earns a minor vs a patch is defined in [`docs/packaging.md`](docs/packaging.md#versioning).
 
+## 0.11.0
+
+- **`/sdlc:ship` verifies the deploy.** New step 9, after the merge: finds the deployment
+  GitHub recorded for the squash commit (deployments API and check runs), waits for a terminal
+  state, and reports the environment and URL, a failure with its log link, "no deployment
+  detected", or a timeout. It never reverts or pushes a fix on its own after a failed deploy,
+  and it never claims a deploy it couldn't see. It doesn't run deploy commands: it assumes
+  merging to `main` deploys, as Vercel-style projects do. The skill's description now says
+  "from a feature description to a verified deploy", and step 9's old clean-up and report is
+  step 10. Minor under the versioning policy: new skill behavior.
+
 ## 0.10.0
 
 - **Local sessions must use a worktree, and it's enforced.** New "Local sessions: one worktree

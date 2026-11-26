@@ -1,6 +1,6 @@
 ---
 name: ship
-description: Take a feature description from idea to merged PR — branch, build, open the PR, run a code review on it, fix what matters, answer every comment, and merge once CI is green.
+description: Take a feature description from idea to a verified deploy — branch, build, open the PR, run a code review on it, fix what matters, answer every comment, merge once CI is green, and confirm the deployment that merge triggers succeeded.
 when_to_use: Only when the user types /sdlc:ship. Because it merges by default, it never starts on its own from a feature description.
 disable-model-invocation: true
 model: sonnet
@@ -10,7 +10,7 @@ allowed-tools: Agent EnterWorktree Bash(git *) Bash(gh pr *) Bash(gh run *) Bash
 
 # Ship
 
-One command from a feature description to a merged PR, chaining this plugin's own skills
+One command from a feature description — nothing prebuilt — to a merged PR and a verified deploy, chaining this plugin's own skills
 (`/sdlc:new-branch`, `/sdlc:create-pr`) with a code review and a fix loop. Generalized from a
 chore-corral session (2026-11-13) that ran this exact sequence by hand — see the CHANGELOG
 entry for 0.7.0.
@@ -243,7 +243,34 @@ commit. Before merging, make sure the PR title and description read well as a co
 `main`, because that's what the squash records. With `--no-merge`, skip this and
 report the PR as ready.
 
-### 9. Clean up and report
+### 9. Verify the deploy
+
+Skip with `--no-merge`. Merging to `main` is what deploys in most projects (Vercel and similar
+deploy `main` on merge); this step confirms it worked rather than assuming. It doesn't run a
+deploy command of its own.
+
+1. Get the squash commit on `main`: `gh pr view <PR#> --json mergeCommit -q .mergeCommit.oid`.
+2. Look for a deployment on that commit:
+   `gh api "repos/{owner}/{repo}/deployments?sha=<sha>"`, then
+   `gh api repos/{owner}/{repo}/deployments/<id>/statuses` for each. Also check the commit's
+   check runs (`gh api repos/{owner}/{repo}/commits/<sha>/check-runs`) for a deploy check such
+   as Vercel's. Give it about three minutes to appear.
+3. Wait for a terminal state (`success`, or `failure`/`error`), checking every 30–60 seconds, up
+   to about 15 minutes.
+
+Report one of:
+
+- **Deployed** — environment and URL (`environment_url` or `target_url`).
+- **Failed** — the failure state and its log URL. **Don't revert or push a fix on your own.**
+  Say what failed and stop; production is now affected and that's the user's call.
+- **No deployment detected** — say so plainly. Don't claim a deploy; it may be a library, a
+  manual-deploy project, or an integration that isn't visible to the GitHub API.
+- **Timed out** — still pending after the wait; give the URL to watch and say it's unverified.
+
+Verifying a deploy is checking that it succeeded, not that the feature works: say what you
+didn't check in the browser.
+
+### 10. Clean up and report
 
 Unsubscribe from PR activity and cancel any scheduled check-ins. Leave the worktree, then remove it
 (`git worktree remove <path>`) and this run's local branch (`git branch -D <branch>`, since a
@@ -251,7 +278,7 @@ squashed branch never counts as merged), then `git fetch --prune`. If the run st
 `--no-merge` was given, leave the worktree in place and say where it is. Report to the user:
 
 - what shipped (one or two sentences, user-facing),
-- the merge commit or the PR link,
+- the merge commit or the PR link, and the deploy result from step 9,
 - review findings fixed vs. answered, with the deferred ones named,
 - anything not verified (e.g. not checked in a browser).
 
