@@ -407,6 +407,39 @@ The plugin delivers the standard in three layers:
 See [`docs/packaging.md`](docs/packaging.md) for why this is one plugin and what
 would justify splitting it.
 
+## Running several agents at once
+
+Every local session works in its own `git worktree` — extra checkouts of the same repository,
+each on its own branch, sharing one `.git` directory (no extra clone, shared fetches). The
+rule is in [`core.md`](plugins/sdlc/standards/core.md#local-sessions-one-worktree-each) and is
+enforced by a `PreToolUse` hook that blocks edits and commits in the primary checkout. This
+section is the how-to.
+
+```
+git fetch origin main
+git worktree add -b feature/add-export ../myrepo-add-export origin/main
+cd ../myrepo-add-export     # start the agent here, not in the main checkout
+```
+
+`/sdlc:new-branch` and `/sdlc:ship` do this for you.
+
+- **Setup per worktree.** Dependencies and untracked files (`.env`) don't come along; install
+  and copy them. Expect a slower first start than a branch switch.
+- **Shared resources.** Ports, local databases and caches are shared across worktrees. Give each
+  agent its own dev-server port, and keep migrations from running against one dev database from
+  two worktrees at once.
+- **Cleanup.** After the merge, `git worktree remove ../myrepo-add-export` and
+  `git branch -D feature/add-export` (`-D`, because a squashed branch never counts as merged).
+  `git worktree list` shows what's still around; `git worktree prune` clears entries for
+  directories you deleted by hand.
+- **Isolation is not independence.** Worktrees stop agents corrupting each other's files, not
+  two PRs changing the same logic. Check open PRs touching the same files before starting, and
+  let each PR sync `origin/main` as `/sdlc:ship` does.
+- **Parallel subagents in one run don't need worktrees.** Subagents owning disjoint files share
+  the run's worktree safely; worktrees separate runs, not the subagents within one.
+- **Escape hatch.** `SDLC_ALLOW_PRIMARY_CHECKOUT=1` switches the hook off for a genuine one-off.
+  Remote sessions are exempt automatically.
+
 ## Choosing how much to take
 
 Two adoption depths exist today, both deliberate — not a partial or broken version of

@@ -30,14 +30,53 @@ the project's own planning doc (e.g. `## M1 — Scaffold & Deploy` becomes
 `milestone/m1-scaffold-deploy`).
 
 **Always branch from the latest `origin/main`.** Fetch first, then branch off the
-remote tip rather than a stale local `main` or another feature branch:
+remote tip rather than a stale local `main` or another feature branch. Local sessions do
+this in a new worktree (see "Local sessions: one worktree each" below); inside a worktree
+that is already yours, `git switch -c <prefix>/<slug> origin/main` does the same thing:
 
 ```
-git fetch origin main && git switch -c <prefix>/<slug> origin/main
+git fetch origin main && git worktree add -b <prefix>/<slug> ../<repo>-<slug> origin/main
 ```
 
 Branching off stale local state drags unrelated or already-merged commits into
 the diff and makes review harder.
+
+## Local sessions: one worktree each
+
+A checkout holds one branch and one working tree. Two sessions in the same checkout overwrite
+each other's edits, trip over each other's branch switches, and commit each other's
+half-finished files. **Every local session works in its own linked `git worktree`, never in the
+repo's primary checkout. This applies even when only one session is running**, because you
+can't see the next one starting, and the rule is cheaper than finding out. Remote sessions
+(Claude Code on the web, GitHub Actions) are exempt: they run in their own ephemeral clone.
+
+```
+git fetch origin main
+git worktree add -b <prefix>/<slug> ../<repo>-<slug> origin/main
+```
+
+This is the branch-lifecycle rule above done in a separate directory: the branch still comes
+from the latest `origin/main` and keeps its prefix. The worktree is a sibling of the primary
+checkout, named `<repo>-<slug>`. Work only inside it. To tell where you are,
+`git rev-parse --git-dir` differs from `git rev-parse --git-common-dir` in a linked worktree.
+
+**This is enforced, not hoped for.** A `PreToolUse` hook in this plugin denies file edits and
+working-tree-changing git commands (`commit`, `add`, `switch`, `checkout`, `merge`, `rebase`,
+`reset`, `stash`, …) in the primary checkout, and says how to create a worktree. Read-only git,
+`fetch`, `push`, `branch` and `git worktree …` still work there, since creating a worktree has
+to be possible. `/sdlc:new-branch` and `/sdlc:ship` create the worktree for you.
+
+- A fresh worktree has no untracked files: install dependencies and copy `.env`-style files
+  yourself.
+- Worktrees share ports, local databases and caches; pick distinct ports and don't run
+  migrations against a shared dev database from two worktrees at once.
+- When the branch is merged or abandoned, remove it: `git worktree remove ../<repo>-<slug>`
+  then `git branch -D <prefix>/<slug>`. Don't leave stale worktrees behind.
+- Isolation doesn't prevent semantic conflicts. Before starting, check open PRs for work on the
+  same files (`gh pr list --json number,title,files`) and don't run two agents on the same
+  logic at once.
+- For a genuine one-off in the primary checkout, the user can set
+  `SDLC_ALLOW_PRIMARY_CHECKOUT=1` to switch the hook off.
 
 ## Merging: squash, then delete the branch
 
